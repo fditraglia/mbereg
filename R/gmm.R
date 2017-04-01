@@ -1,17 +1,45 @@
 gmm_a0_zero <- function(dat, params, gradient = FALSE){
+  # Since we assume a0 = 0, denote a1 by a in this function
+
   # Unpack data
   y <- dat$y
   z <- dat$z
   Tobs <- dat$Tobs
 
+  # Condition on P(z = 1)
+  q <- mean(z)
+
   # Unpack parameters
-  a1 <- params[1]
+  a <- params[1]
   b <- params[2]
-  q <- params[3]
-  p <- params[4]
-  mu <- params[5]
-  s <- params[6]
-  r <- params[7]
+  cc <- params[3]
+  s_ee <- params[4]
+  lam1 <- params[5]
+  lam2 <- params[6]
+
+  # Construct errors u(theta) and v(theta)
+  u <- y - cc - (b / (1 - a)) * Tobs
+  v <- y^2 - s_ee - cc^2 - (b / (1 - a)) * 2 * y * Tobs + (b^2 / (1 - a)) * Tobs
+
+  # Construct sample analogues of moment conditions
+  g1_n <- c(mean(u), mean(v))
+  g2_n <- c(mean(u * z), mean(v * z))
+  h1_n <- (1 - a) - mean(Tobs * (1 - z)) / (1 - q)
+  h2_n <- (1 - a) - mean(Tobs * z) / q
+  psi_n <- c(g1_n, g2_n, h1_n - lam1, h2_n - lam2)
+
+  # Calculate gradient
+  column <- c(mean(Tobs),
+              mean(2 * y - b * Tobs),
+              mean(Tobs * z),
+              mean((2 * y - b * Tobs) * z))
+  G_n <- cbind((-b / ((1 - a)^2)) * column,
+               (-1 / (1 - a)) * column,
+               c(-1, -2 * cc, -mean(z), -2 * cc * mean(z)),
+               c(0, -1, 0, -mean(z)))
+
+
+
 
   # Calculate f_n
   W <- cbind(z, Tobs, y, y^2, y * Tobs)

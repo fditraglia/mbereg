@@ -14,8 +14,8 @@ gmm_a0_zero <- function(dat, params, gradient = FALSE){
   b <- params[2]
   cc <- params[3]
   s_ee <- params[4]
-  lam1 <- params[5]
-  lam2 <- params[6]
+  #lam1 <- params[5]
+  #lam2 <- params[6]
 
   # Construct errors u(theta) and v(theta)
   u <- y - cc - (b / (1 - a)) * Tobs
@@ -24,60 +24,37 @@ gmm_a0_zero <- function(dat, params, gradient = FALSE){
   # Construct sample analogues of moment conditions
   g1_n <- c(mean(u), mean(v))
   g2_n <- c(mean(u * z), mean(v * z))
-  h1_n <- (1 - a) - mean(Tobs * (1 - z)) / (1 - q)
-  h2_n <- (1 - a) - mean(Tobs * z) / q
-  psi_n <- c(g1_n, g2_n, h1_n - lam1, h2_n - lam2)
-
-  # Calculate gradient
-  column <- c(mean(Tobs),
-              mean(2 * y - b * Tobs),
-              mean(Tobs * z),
-              mean((2 * y - b * Tobs) * z))
-  G_n <- cbind((-b / ((1 - a)^2)) * column,
-               (-1 / (1 - a)) * column,
-               c(-1, -2 * cc, -mean(z), -2 * cc * mean(z)),
-               c(0, -1, 0, -mean(z)))
-
-
-
-
-  # Calculate f_n
-  W <- cbind(z, Tobs, y, y^2, y * Tobs)
-  colnames(W) <- c('z', 'T', 'y', 'ysq', 'yT')
-  h_n <- colMeans(W) - c(q, p, mu, s, r)
-  cov_z_y <- mean(z * y) - q * mu
-  cov_z_T <- mean(z * Tobs) - q * p
-  cov_z_ysq <- mean(z * y^2) - q * s
-  cov_z_yT <- mean(z * y * Tobs) - q * r
-  g_n <- c(cov_z_y - (b / (1 - a1)) * cov_z_T,
-          cov_z_ysq - 2 * (b / (1 - a1)) * cov_z_yT + (b^2 / (1 - a1)) * cov_z_T)
-  f_n <- c(g_n, h_n)
+  #h1_n <- (1 - a) - mean(Tobs * (1 - z)) / (1 - q)
+  #h2_n <- (1 - a) - mean(Tobs * z) / q
+  #psi_n <- c(g1_n, g2_n, h1_n - lam1, h2_n - lam2)
+  psi_n <- c(g1_n, g2_n)
 
   if(gradient){
-  # Calculate F_n and GMM gradient
-  D_g1 <- c(-b * cov_z_T / ((1 - a1)^2),
-            -cov_z_T / (1 - a1),
-            p * b / (1 - a1) - mu,
-            q * b / (1 - a1),
-            -q,
-            0,
-            0)
-  D_g2 <- c((b^2 * cov_z_T - 2 * b * cov_z_yT) / ((1 - a1)^2),
-            (2 * b * cov_z_T - 2 * cov_z_yT) / (1 - a1),
-            2 * r * b / (1 - a1) - p * b^2 / (1 - a1) - s,
-            -q * b^2 / (1 - a1),
-            0,
-            -q,
-            2 * q * b / (1 - a1))
-  F_n <- rbind(D_g1,
-               D_g2,
-               cbind(matrix(0, 5, 2), -diag(5)))
+  # Calculate gradient
+  k1_bar <- c(mean(Tobs),
+              mean(2 * Tobs * y - b * Tobs),
+              mean(Tobs * z),
+              mean(2 * Tobs * y * z - b * Tobs * z))
+  k2_bar <- c(mean(Tobs),
+              mean(2 * Tobs * y - 2 * b * Tobs),
+              mean(Tobs * z),
+              mean(2 * Tobs * y * z - 2 * b * Tobs * z))
+  R1_bar <- c(-1, -2 * cc, -mean(z), -2 * cc * mean(z))
+  R2_bar <- c(0, -1, 0, -mean(z))
 
-  gradient <- drop(2 * crossprod(F_n, f_n))
+  G_n <- cbind((-b / ((1 - a)^2)) * k1_bar,
+               (-1 / (1 - a)) * k2_bar,
+               R1_bar, R2_bar)
+  #H_n <- matrix(c(rep(-1, 2), rep(0, 6)), 2, 4)
+  #F_n <- cbind(rbind(G_n, H_n))
+  #Psi_n <- cbind(F_n, rbind(matrix(0, 4, 2), diag(nrow = 2, ncol = 2)))
+  Psi_n <- G_n
+
+  gradient <- drop(crossprod(Psi_n, psi_n)) # GMM criterion with 1/2 scaling
   names(gradient) <- NULL
   return(gradient)
   } else {
-    return(sum(f_n^2))
+    return(0.5 * sum(psi_n^2)) # GMM criterion with 1/2 scaling
   }
 }
 
@@ -85,8 +62,9 @@ gmm_a0_zero <- function(dat, params, gradient = FALSE){
 solve_gmm_a0_zero <- function(dat){
 
   # Functions holding data *fixed* to pass to constrOptim
-  criterion <- function(theta) gmm_a0_zero(dat, theta, gradient = FALSE)
-  gradient <- function(theta) gmm_a0_zero(dat, theta, gradient = TRUE)
+  #     gamma = (theta, lambda) is the full parameter vector
+  criterion <- function(gamma) gmm_a0_zero(dat, gamma, gradient = FALSE)
+  gradient <- function(gamma) gmm_a0_zero(dat, gamma, gradient = TRUE)
 
   # Unpack data to calculate starting values
   y <- dat$y
@@ -99,30 +77,35 @@ solve_gmm_a0_zero <- function(dat){
   a1_upper <- 1 - max(p0, p1)
   a1_start <- 0.5 * a1_upper
 
+  # Starting values for lambda1 and lambda2 based on a1_start
+  #lam1_start <- 1 - p0 - a1_start
+  #lam2_start <- 1 - p1 - a1_start
+
   # Starting value for beta between IV (wald) and Reduced Form (rf)
   wald <- cov(y, Tobs) / cov(z, Tobs)
   rf <- cov(y, z) / var(z)
   b_start <- 0.5 * (wald + rf)
 
-  # Starting values for "nuisance" parameters
-  q_start <- mean(z)
-  p_start <- mean(Tobs)
-  mu_start <- mean(y)
-  s_start <- mean(y^2)
-  r_start <- mean(y * Tobs)
-  start_vals <- c(a1_start, b_start, q_start, p_start, mu_start, s_start, r_start)
+  # Starting value for c and s_ee based on b_start
+  c_start <- mean(y) - b_start * mean(Tobs)
+  s_ee_start <- var(y - b_start * Tobs)
+
+  # Collect all starting values
+  #start_vals <- c(a1_start, b_start, c_start, s_ee_start, lam1_start, lam2_start)
+  start_vals <- c(a1_start, b_start, c_start, s_ee_start)
 
   # Set up linear inequality constraints: M %*% params - v >= 0
-  M <- matrix(0, 7, 7)
-  M[1:2, 1] <- c(1, -1)
-  M[3:4, 3] <- c(1, -1)
-  M[5:6, 4] <- c(1, -1)
-  M[7, 6] <- 1
-  v <- c(0, -a1_upper, 0, -1, 0, -1, 0)
+  #M <- matrix(0, 4, 6)
+  #M[1, 1] <- M[2, 4] <- M[3, 5] <- M[4, 6] <- 1
+  #v <- rep(0, 4)
+  M <- matrix(0, 2, 4)
+  M[1, 1] <- M[2, 4] <- 1
+  v <- rep(0, 2)
 
-  out <- constrOptim(theta = start_vals, f = criterion, grad = gradient,
+  out <- constrOptim(theta = start_vals, f = criterion, grad = NULL,#grad = gradient,
                      ui = M, ci = v)
-  names(out$par) <- c('a1', 'b', 'q', 'p', 'mu', 's', 'r')
+  #names(out$par) <- c('a1', 'b', 'c', 's_ee', 'lam1', 'lam2')
+  names(out$par) <- c('a1', 'b', 'c', 's_ee')
 
   # Also return the "naive" GMM estimates
   s_T_z <- cov(Tobs, z)
@@ -131,8 +114,7 @@ solve_gmm_a0_zero <- function(dat){
   s_yT_z <- cov(y * Tobs, z)
   b_naive <- 2 * s_yT_z / s_T_z - s_y2_z / s_y_z
   a1_naive <- 1 - 2 * s_yT_z / s_y_z + s_y2_z * s_T_z / s_y_z^2
-  naive <- c(a1 = a1_naive, b = b_naive, q = q_start, p = p_start, mu = mu_start,
-             s = s_start, r = r_start)
+  naive <- c(a1 = a1_naive, b = b_naive)
   out$naive <- naive
   out$wald <- wald
   out$rf <- rf

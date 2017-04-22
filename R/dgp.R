@@ -10,5 +10,5 @@ dgp <- function(a0, a1, b = 1, n = 1000, d = 0.15, rho = 0.5, cc = 0){
   y <- cc + b * Tstar + errors[,1]
   #mis-classification
   Tobs <- (1 - Tstar) * rbinom(n, 1, a0) + Tstar * rbinom(n, 1, 1 - a1)
-  return(data.frame(Tstar, Tobs, y, z))
+  return(data.frame(Tstar, Tobs, y, z, e = errors[,1]))
 }

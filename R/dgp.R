@@ -1,4 +1,4 @@
-dgp <- function(a0, a1, b = 1, n = 1000, d = 0.15, rho = 0.5){
+dgp <- function(a0, a1, b = 1, n = 1000, d = 0.15, rho = 0.5, cc = 0){
   n_treat <- ceiling(n/2)
   n_control <- n - n_treat
   z <- c(rep(0, n_control), rep(1, n_treat)) # offer of treatment
@@ -7,7 +7,7 @@ dgp <- function(a0, a1, b = 1, n = 1000, d = 0.15, rho = 0.5){
   g0 <- qnorm(d)
   g1 <- qnorm(1 - d) - qnorm(d)
   Tstar <- as.numeric(g0 + g1 * z + errors[,2] > 0) #select into treatment
-  y <- b * Tstar + errors[,1]
+  y <- cc + b * Tstar + errors[,1]
   #mis-classification
   Tobs <- (1 - Tstar) * rbinom(n, 1, a0) + Tstar * rbinom(n, 1, 1 - a1)
   return(data.frame(Tstar, Tobs, y, z))

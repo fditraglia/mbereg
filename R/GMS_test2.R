@@ -78,10 +78,14 @@ check_GMS_test2 <- function(a1, beta){
   GMS_test2(a1, beta, dat, sims)
 }
 
-p_values1 <- replicate(1000, check_GMS_test2(a1 = 0.0, beta = 1))
-p_values2 <- replicate(1000, check_GMS_test2(a1 = 0.1, beta = 1))
-p_values3 <- replicate(1000, check_GMS_test2(a1 = 0.2, beta = 1))
-p_values4 <- replicate(1000, check_GMS_test2(a1 = 0.0, beta = 2))
-p_values5 <- replicate(1000, check_GMS_test2(a1 = 0.1, beta = 2))
-p_values6 <- replicate(1000, check_GMS_test2(a1 = 0.2, beta = 2))
+n_reps <- 2000
+p_values1 <- replicate(n_reps, check_GMS_test2(a1 = 0.0, beta = 0))
+p_values2 <- replicate(n_reps, check_GMS_test2(a1 = 0.1, beta = 0))
+p_values3 <- replicate(n_reps, check_GMS_test2(a1 = 0.2, beta = 0))
+p_values4 <- replicate(n_reps, check_GMS_test2(a1 = 0.0, beta = 0.25))
+p_values5 <- replicate(n_reps, check_GMS_test2(a1 = 0.1, beta = 0.25))
+p_values6 <- replicate(n_reps, check_GMS_test2(a1 = 0.2, beta = 0.25))
+p_values7 <- replicate(n_reps, check_GMS_test2(a1 = 0.0, beta = 0.5))
+p_values8 <- replicate(n_reps, check_GMS_test2(a1 = 0.1, beta = 0.5))
+p_values9 <- replicate(n_reps, check_GMS_test2(a1 = 0.2, beta = 0.5))
 

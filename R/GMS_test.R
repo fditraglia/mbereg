@@ -1,76 +1,160 @@
-# Simple example of the GMS test from Andrews & Soares (2010) that imposes
-# c = 0 and s_ee = 1, as is the case in our baseline simulation DGP.
-
+# ----------------------------------------------------------------------------
 # Calculate the "MMM" test stat - "S1" from Andrews and Soares
-get_S1 <- function(m, Sigma, p){
+# ----------------------------------------------------------------------------
+# - m is the vector $\sqrt{n} * \bar{m}_n(theta_0)$
+# - Sigma is the matrix $\widehat{\Sigma}_n(theta_0)
+# - p is the number of inequality moment conditions, assumed to correpond to
+#     the first p elements of m
+# ----------------------------------------------------------------------------
+get_test_stat <- function(m, Sigma, p){
   m[1:p] <- ifelse(m[1:p] < 0, m[1:p], 0)
   sum(m^2 / diag(Sigma))
 }
 
-# Calculate sample inequality and equality moment conditions under H0
-get_m <- function(dat, a, b, q){
+
+#----------------------------------------------------------------------------
+# Square root of symmetric, PSD matrix. Based on code from MASS::mvrnorm.
+#----------------------------------------------------------------------------
+#     Returns M_sqrt such that all.equal(M, M_sqrt %*% t(M_sqrt)) is TRUE.
+#----------------------------------------------------------------------------
+sqrtm <- function(M, tol = 1e-06){
+  stopifnot(isSymmetric(M))
+  p <- nrow(M)
+  eM <- eigen(M, symmetric = TRUE)
+  ev <- eM$values
+  stopifnot(all(ev >= -tol * abs(ev[1L])))
+  M_sqrt <- eM$vectors %*% diag(sqrt(pmax(ev, 0)), p)
+  return(M_sqrt)
+}
+
+
+#----------------------------------------------------------------------------
+# GMS test for our example:
+#----------------------------------------------------------------------------
+#     No restrictions on a0 or a1, "weak" and second moment bounds, and
+#     preliminary estimators of strongly identified parameters with appropriate
+#     adjustment to the GMS variance matrix estimator. Based on the "asymptotic"
+#     version of GMS, i.e. the version that makes standard normal draws to
+#     simulate the limit experiment rather than bootstrapping the sample.
+#----------------------------------------------------------------------------
+# - a0 is the null hypothesis for $\alpha_0$
+# - a1 is the null hypothesis for $\alpha_1$
+# - beta is the null hypothesis for $
+# - dat is a dataframe containing the data, with columns y, z, and Tobs
+# - normal_sims is a (??? \times R) matrix of standard normal random draws
+#----------------------------------------------------------------------------
+GMS_test <- function(a0, a1, beta, dat, normal_sims){
+  Tobs <- dat$Tobs
   y <- dat$y
   z <- dat$z
-  Tobs <- dat$Tobs
-  # Construct errors u(theta) and v(theta)
-  u <- y - (b / (1 - a)) * Tobs
-  v <- y^2 - 1 - (b / (1 - a)) * 2 * y * Tobs + (b^2 / (1 - a)) * Tobs
-
-  # Construct sample analogues of moment conditions
-  #     -- each row is an individual
-  out <- cbind((1 - a) - Tobs * (1 - z) / (1 - q),
-               (1 - a) - Tobs * z / q,
-               u * z,
-               v * z)
-  return(out)
-}
-
-# Calculate sample analogue based on get_m
- get_m_bar <- function(dat, a, b, q){
-   m <- get_m(dat, a, b, q)
-   return(colMeans(m))
- }
-
-# Estimate variance of moment conditions under H0
-get_Sigma_hat <- function(dat, a, b, q){
-  m <- get_m(dat, a, b, q)
-  n <- nrow(m)
-  return((n - 1) * var(m) / n) # var in R divides by (n - 1)
-}
-
-
-GMS_test <- function(dat, a_null, b_null, n_boot = 5000, get_S = get_S1){
-  # Impose the null hypothesis and fix q
-  q <- mean(dat$z)
-  get_m_bar0 <- function(mydat) get_m_bar(mydat, a_null, b_null, q)
-  get_Sigma_hat0 <- function(mydat) get_Sigma_hat(mydat, a_null, b_null, q)
-
-  # Caclulate "true sample" test statistic (i.e. non-bootstrap)
-  m_bar <- get_m_bar0(dat)
-  Sigma_hat <- get_Sigma_hat0(dat)
+  q <- mean(z) # treat this as fixed in repeated sampling
   n <- nrow(dat)
-  Tn <- get_S(sqrt(n) * m_bar, Sigma_hat, p = 2)
 
-  # Determine which moment inequalities are far from binding (FB == TRUE)
-  tn <- sqrt(n) * m_bar[1:2] / sqrt(diag(Sigma_hat)[1:2])
-  FB <- tn > sqrt(log(n))
+  theta1 <- beta / (1 - a0 - a1)
+  theta2 <- theta1^2 * (1 + (a0 - a1))
+  theta3 <- theta1^3 * ((1 - a0 - a1)^2 + 6 * a0 * (1 - a1))
 
-  keep_me <- which(c(!FB, rep(TRUE, 2))) # Indices of which moment conditions to keep
-  p_GMS <- sum(!FB) # How many moment inequalities are *not* dropped?
+  # Moment functions for preliminary estimators
+  h_p0 <- Tobs * (1 - z) / (1 - q)
+  h_p1 <- Tobs * z / q
+  h_nu_00 <- y * (1 - Tobs) * (1 - z) / sqrt(1 - q)
+  h_nu_10 <- y * Tobs * (1 - z) / sqrt(1 - q)
+  h_nu_01 <- y * (1 - Tobs) * z / sqrt(q)
+  h_nu_11 <- y * Tobs * z / sqrt(q)
+  h_k1 <- y - theta1 * Tobs
+  h_k2 <- y^2 - theta1 * 2 * y * Tobs + theta2 * Tobs
+  h_k3 <- y^3 - theta1 * 3 * y^2 * Tobs + theta2 * 3 * y * Tobs - theta3 * Tobs
+  h <- cbind(h_p0, h_p1, h_nu_00, h_nu_10, h_nu_01, h_nu_11, h_k1, h_k2, h_k3)
 
-  # Determine the bootstrap critical value
-  Tn_boot <- rep(NA_real_, n_boot)
-  for(r in 1:n_boot){
+  # Preliminary estimators
+  p0 <- mean(h_p0)
+  p1 <- mean(h_p1)
+  nu_00 <- mean(h_nu_00)
+  nu_10 <- mean(h_nu_10)
+  nu_01 <- mean(h_nu_01)
+  nu_11 <- mean(h_nu_11)
+  k1 <- mean(h_k1)
+  k2 <- mean(h_k2)
+  k3 <- mean(h_k3)
+  gamma <- c(p0, p1, nu_00, nu_10, nu_01, nu_11, k1, k2, k3)
 
-    dat_boot <- dat[sample(1:n, n, TRUE),]
-    m_bar_star <- get_m_bar0(dat_boot)
-    Sigma_hat_star <- get_Sigma_hat0(dat_boot)
-    d_hat_star <- diag(Sigma_hat_star)
-    M_star <- sqrt(n) * (m_bar_star - m_bar) / sqrt(diag(Sigma_hat_star))
-    Omega_hat_star <- cov2cor(Sigma_hat_star)
-    M_star_star <- M_star[keep_me]
-    Omega_hat_star_star <- Omega_hat_star[keep_me, keep_me]
-    Tn_boot[r] <- get_S(M_star_star, Omega_hat_star_star, p_GMS)
-  }
-  return(mean(Tn_boot > Tn))
+  # Make sure I've ordered the parameters consistently
+  stopifnot(all.equal(gamma, colMeans(h), check.attributes = FALSE))
+
+  # Equality moment conditions
+  u1 <- h_k1 - k1
+  u2 <- h_k2 - k2
+  u3 <- h_k3 - k3
+  mE <- z * cbind(u1, u2, u3)
+
+  # First-moment Inequalities
+  mI_1 <- cbind(rep(p0 - a0, n),
+                rep(1 - p0 - a1, n),
+                rep(p1 - a0, n),
+                rep(1 - p1 - a1, n))
+
+  # Second-moment Inequalities
+  y2_a0_z0 <- y^2 * (1 - z) * (Tobs - a0)
+  d_a0_z0 <- (1 - a0) * nu_10 - a0 * nu_00
+
+  y2_a1_z0 <- y^2 * (1 - z) * (1 - Tobs - a1)
+  d_a1_z0 <- a1 * nu_10 - (1 - a1) * nu_00
+
+  y2_a0_z1 <- y^2 * z * (Tobs - a0)
+  d_a0_z1 <- (1 - a0) * nu_11 - a0 * nu_01
+
+  y2_a1_z1 <- y^2 * z * (1 - Tobs - a1)
+  d_a1_z1 <- a1 * nu_11 - (1 - a1) * nu_01
+
+  mI_2 <- cbind((p0 - a0) * y2_a0_z0 - d_a0_z0^2,
+                (1 - p0 - a1) * y2_a1_z0 - d_a1_z0^2,
+                (p1 - a0) * y2_a0_z1 - d_a0_z1^2,
+                (1 - p1 - a1) * y2_a1_z1 - d_a1_z1^2)
+
+  # Full set of Inequalities
+  mI <- cbind(mI_1, mI_2)
+
+  # Full set of moment conditions
+  m <- cbind(mI, mE)
+
+  # Expected derivative matrix to account for preliminary estimation
+  B_I1_p <- cbind(c(1, -1, 0, 0),
+                  c(0, 0, 1, -1))
+  B_I1 <- cbind(B_I1_p, matrix(0, 4, 4), matrix(0, 4, 3))
+  B_I2_p <- matrix(c( mean(y2_a0_z0), 0,
+                     -mean(y2_a1_z0), 0,
+                      0, mean(y2_a0_z1),
+                      0, -mean(y2_a1_z1)),
+                   4, 2, byrow = TRUE)
+  B_I2_nu <- matrix(c(2 * a0 * d_a0_z0, -2 * (1 - a0) * d_a0_z0, 0, 0,
+                      2 * (1 - a1) * d_a1_z0, -2 * a1 * d_a1_z0, 0, 0,
+                      0, 0, 2 * a0 * d_a0_z1, -2 * (1 - a0) * d_a0_z1,
+                      0, 0, 2 * (1 - a1) * d_a1_z1, -2 * a1 * d_a1_z1),
+                    4, 4, byrow = TRUE)
+  B_I2 <- cbind(B_I2_p, B_I2_nu, matrix(0, 4, 3))
+  B_E <- cbind(matrix(0, 3, 2), matrix(0, 3, 4), -q * diag(3))
+  B <- rbind(B_I1, B_I2, B_E)
+
+  # Estimate of asymptotic variance matrix of m
+  A <- cbind(diag(nrow(B)), B)
+  Sigma_n <- A %*% var(cbind(m, h)) %*% t(A)
+
+  # Calculate test statistic
+  m_bar <- colMeans(m)
+  n_ineq <- ncol(mI)
+  n_eq <- ncol(mE)
+  T_n <- get_test_stat(sqrt(n) * m_bar, Sigma_n, n_ineq)
+
+  # Carry out moment selection on the inequality conditions
+  s_n <- sqrt(diag(Sigma_n))
+  phi <- c(ifelse((sqrt(n) * m_bar[1:n_ineq] / s_n[1:n_ineq]) > sqrt(log(n)),
+                  Inf, 0), rep(0, n_eq))
+
+  # Calculate the p-value of asymptotic test
+  Omega_n <- cov2cor(Sigma_n)
+  M_star <- sqrtm(Omega_n) %*% normal_sims
+  T_n_star <- apply(M_star, 2, function(x) get_test_stat(x + phi, Omega_n, n_ineq))
+  return(mean(T_n_star > T_n))
 }
+
+

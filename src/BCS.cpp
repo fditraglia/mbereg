@@ -1,5 +1,7 @@
 #include <RcppArmadillo.h>
 #include <stdexcept>
+#include "brent.hpp"
+
 using namespace Rcpp;
 
 // [[Rcpp::export]]
@@ -197,8 +199,32 @@ List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws){
                       Named("Tn_DR") = Tn_DR);
 }
 
-double test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z){
-  return 0;
+class Qn: public brent::func_base
+{
+public:
+  Qn (BCS myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
+  double operator() (double a1) {
+    return myBCS.get_Qn(a1, beta_null);
+    }
+private:
+  BCS myBCS;
+  double beta_null;
+};
+
+// [[Rcpp::export]]
+double test_Qn(double a1, arma::vec y, arma::vec Tobs, arma::vec z){
+  BCS myBCS(y, Tobs, z);
+  Qn myQn(myBCS, 1.0);
+  return myQn(a1);
+}
+
+// [[Rcpp::export]]
+List test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z){
+  BCS myBCS(y, Tobs, z);
+  Qn myQn(myBCS, 1.0);
+  double a1_star;
+  double Qn_star = brent::local_min(0.0, 0.99, 0.0001, myQn, a1_star);
+  return List::create(Named("minimum") = a1_star, Named("objective") = Qn_star);
 }
 
 
@@ -207,14 +233,14 @@ public:
   baz(double, double);
   double c;
   double f(double x, double k) {
-    return -c * pow(x, 2.0) + k;
+    return c * pow(x, 2.0) + k;
   }
 };
 baz::baz(double a, double b){
   c = fabs(a + b) + 1.0;
 }
 
-class myFunctorClass
+class myFunctorClass: public brent::func_base
 {
 public:
   myFunctorClass (baz mybaz_, double k_) : mybaz( mybaz_ ), k( k_ ) {}
@@ -227,8 +253,17 @@ private:
 };
 
 // [[Rcpp::export]]
-double testFunctor(double x) {
+double f(double x){
   baz mybaz(1.0, 2.0);
-  myFunctorClass f(mybaz, -1.0);
-  return f(x);
+  myFunctorClass my_f(mybaz, -1.0);
+  return my_f(x);
+}
+
+// [[Rcpp::export]]
+List min_f(){
+  baz mybaz(1.0, 2.0);
+  myFunctorClass my_f(mybaz, -1.0);
+  double x_star;
+  double f_star = brent::local_min(-2.0, 2.0, 0.0001, my_f, x_star);
+  return List::create(Named("minimum") = x_star, Named("objective") = f_star);
 }

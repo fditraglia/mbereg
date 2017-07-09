@@ -37,7 +37,19 @@ testy <- function(y, Tobs, z, normal_draws) {
     .Call('mbereg_testy', PACKAGE = 'mbereg', y, Tobs, z, normal_draws)
 }
 
-testFunctor <- function(x) {
-    .Call('mbereg_testFunctor', PACKAGE = 'mbereg', x)
+test_Qn <- function(a1, y, Tobs, z) {
+    .Call('mbereg_test_Qn', PACKAGE = 'mbereg', a1, y, Tobs, z)
+}
+
+test_Qn_opt <- function(y, Tobs, z) {
+    .Call('mbereg_test_Qn_opt', PACKAGE = 'mbereg', y, Tobs, z)
+}
+
+f <- function(x) {
+    .Call('mbereg_f', PACKAGE = 'mbereg', x)
+}
+
+min_f <- function() {
+    .Call('mbereg_min_f', PACKAGE = 'mbereg')
 }
 

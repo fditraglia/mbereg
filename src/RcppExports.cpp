@@ -109,14 +109,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// testFunctor
-double testFunctor(double x);
-RcppExport SEXP mbereg_testFunctor(SEXP xSEXP) {
+// test_Qn
+double test_Qn(double a1, arma::vec y, arma::vec Tobs, arma::vec z);
+RcppExport SEXP mbereg_test_Qn(SEXP a1SEXP, SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type a1(a1SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Tobs(TobsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_Qn(a1, y, Tobs, z));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_Qn_opt
+List test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z);
+RcppExport SEXP mbereg_test_Qn_opt(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Tobs(TobsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_Qn_opt(y, Tobs, z));
+    return rcpp_result_gen;
+END_RCPP
+}
+// f
+double f(double x);
+RcppExport SEXP mbereg_f(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(testFunctor(x));
+    rcpp_result_gen = Rcpp::wrap(f(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// min_f
+List min_f();
+RcppExport SEXP mbereg_min_f() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(min_f());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -131,7 +168,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"mbereg_foo", (DL_FUNC) &mbereg_foo, 1},
     {"mbereg_bar", (DL_FUNC) &mbereg_bar, 1},
     {"mbereg_testy", (DL_FUNC) &mbereg_testy, 4},
-    {"mbereg_testFunctor", (DL_FUNC) &mbereg_testFunctor, 1},
+    {"mbereg_test_Qn", (DL_FUNC) &mbereg_test_Qn, 4},
+    {"mbereg_test_Qn_opt", (DL_FUNC) &mbereg_test_Qn_opt, 3},
+    {"mbereg_f", (DL_FUNC) &mbereg_f, 1},
+    {"mbereg_min_f", (DL_FUNC) &mbereg_min_f, 0},
     {NULL, NULL, 0}
 };
 

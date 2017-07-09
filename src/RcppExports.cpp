@@ -29,14 +29,58 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// foo
-arma::vec foo(arma::vec z);
-RcppExport SEXP mbereg_foo(SEXP zSEXP) {
+// SS
+double SS(arma::vec v);
+RcppExport SEXP mbereg_SS(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
-    rcpp_result_gen = Rcpp::wrap(foo(z));
+    Rcpp::traits::input_parameter< arma::vec >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(SS(v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// SS_neg
+double SS_neg(arma::vec v);
+RcppExport SEXP mbereg_SS_neg(SEXP vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(SS_neg(v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sqrtm_cpp
+arma::mat sqrtm_cpp(arma::mat M);
+RcppExport SEXP mbereg_sqrtm_cpp(SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(sqrtm_cpp(M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cov2cor_cpp
+arma::mat cov2cor_cpp(arma::mat V);
+RcppExport SEXP mbereg_cov2cor_cpp(SEXP VSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type V(VSEXP);
+    rcpp_result_gen = Rcpp::wrap(cov2cor_cpp(V));
+    return rcpp_result_gen;
+END_RCPP
+}
+// foo
+arma::mat foo(arma::mat V);
+RcppExport SEXP mbereg_foo(SEXP VSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type V(VSEXP);
+    rcpp_result_gen = Rcpp::wrap(foo(V));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -57,6 +101,10 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"mbereg_center", (DL_FUNC) &mbereg_center, 1},
     {"mbereg_mycov", (DL_FUNC) &mbereg_mycov, 2},
+    {"mbereg_SS", (DL_FUNC) &mbereg_SS, 1},
+    {"mbereg_SS_neg", (DL_FUNC) &mbereg_SS_neg, 1},
+    {"mbereg_sqrtm_cpp", (DL_FUNC) &mbereg_sqrtm_cpp, 1},
+    {"mbereg_cov2cor_cpp", (DL_FUNC) &mbereg_cov2cor_cpp, 1},
     {"mbereg_foo", (DL_FUNC) &mbereg_foo, 1},
     {"mbereg_testy", (DL_FUNC) &mbereg_testy, 3},
     {NULL, NULL, 0}

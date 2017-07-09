@@ -9,8 +9,24 @@ mycov <- function(M1, M2) {
     .Call('mbereg_mycov', PACKAGE = 'mbereg', M1, M2)
 }
 
-foo <- function(z) {
-    .Call('mbereg_foo', PACKAGE = 'mbereg', z)
+SS <- function(v) {
+    .Call('mbereg_SS', PACKAGE = 'mbereg', v)
+}
+
+SS_neg <- function(v) {
+    .Call('mbereg_SS_neg', PACKAGE = 'mbereg', v)
+}
+
+sqrtm_cpp <- function(M) {
+    .Call('mbereg_sqrtm_cpp', PACKAGE = 'mbereg', M)
+}
+
+cov2cor_cpp <- function(V) {
+    .Call('mbereg_cov2cor_cpp', PACKAGE = 'mbereg', V)
+}
+
+foo <- function(V) {
+    .Call('mbereg_foo', PACKAGE = 'mbereg', V)
 }
 
 testy <- function(y, Tobs, z) {

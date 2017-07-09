@@ -8,9 +8,9 @@ arma::mat center(arma::mat M) {
 }
 
 // [[Rcpp::export]]
+arma::mat mycov(arma::mat M1, arma::mat M2) {
 // Armadillo's covariance function requires that both matrices be of the same
 // dimension. Mine, like the one in base R, does not.
-arma::mat mycov(arma::mat M1, arma::mat M2) {
   assert(M1.n_rows == M2.n_rows);
   int n = M1.n_rows;
   return center(M1).t() * center(M2) / (n - 1);

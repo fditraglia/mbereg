@@ -30,14 +30,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // foo
-arma::mat foo(arma::vec z, arma::mat W);
-RcppExport SEXP mbereg_foo(SEXP zSEXP, SEXP WSEXP) {
+arma::vec foo(arma::vec z);
+RcppExport SEXP mbereg_foo(SEXP zSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type W(WSEXP);
-    rcpp_result_gen = Rcpp::wrap(foo(z, W));
+    rcpp_result_gen = Rcpp::wrap(foo(z));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -58,7 +57,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"mbereg_center", (DL_FUNC) &mbereg_center, 1},
     {"mbereg_mycov", (DL_FUNC) &mbereg_mycov, 2},
-    {"mbereg_foo", (DL_FUNC) &mbereg_foo, 2},
+    {"mbereg_foo", (DL_FUNC) &mbereg_foo, 1},
     {"mbereg_testy", (DL_FUNC) &mbereg_testy, 3},
     {NULL, NULL, 0}
 };

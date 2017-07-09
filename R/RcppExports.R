@@ -9,8 +9,8 @@ mycov <- function(M1, M2) {
     .Call('mbereg_mycov', PACKAGE = 'mbereg', M1, M2)
 }
 
-foo <- function(z, W) {
-    .Call('mbereg_foo', PACKAGE = 'mbereg', z, W)
+foo <- function(z) {
+    .Call('mbereg_foo', PACKAGE = 'mbereg', z)
 }
 
 testy <- function(y, Tobs, z) {

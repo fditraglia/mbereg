@@ -6,19 +6,60 @@
 
 using namespace Rcpp;
 
-// rcpp_hello
-List rcpp_hello();
-RcppExport SEXP mbereg_rcpp_hello() {
+// center
+arma::mat center(arma::mat M);
+RcppExport SEXP mbereg_center(SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpp_hello());
+    Rcpp::traits::input_parameter< arma::mat >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(center(M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mycov
+arma::mat mycov(arma::mat M1, arma::mat M2);
+RcppExport SEXP mbereg_mycov(SEXP M1SEXP, SEXP M2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type M1(M1SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type M2(M2SEXP);
+    rcpp_result_gen = Rcpp::wrap(mycov(M1, M2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// foo
+arma::mat foo(arma::vec z, arma::mat W);
+RcppExport SEXP mbereg_foo(SEXP zSEXP, SEXP WSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(foo(z, W));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testy
+List testy(arma::vec y, arma::vec Tobs, arma::vec z);
+RcppExport SEXP mbereg_testy(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Tobs(TobsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
+    rcpp_result_gen = Rcpp::wrap(testy(y, Tobs, z));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"mbereg_rcpp_hello", (DL_FUNC) &mbereg_rcpp_hello, 0},
+    {"mbereg_center", (DL_FUNC) &mbereg_center, 1},
+    {"mbereg_mycov", (DL_FUNC) &mbereg_mycov, 2},
+    {"mbereg_foo", (DL_FUNC) &mbereg_foo, 2},
+    {"mbereg_testy", (DL_FUNC) &mbereg_testy, 3},
     {NULL, NULL, 0}
 };
 

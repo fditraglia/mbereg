@@ -74,26 +74,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // foo
-arma::mat foo(arma::mat V);
-RcppExport SEXP mbereg_foo(SEXP VSEXP) {
+arma::mat foo(arma::mat boot_draws);
+RcppExport SEXP mbereg_foo(SEXP boot_drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type V(VSEXP);
-    rcpp_result_gen = Rcpp::wrap(foo(V));
+    Rcpp::traits::input_parameter< arma::mat >::type boot_draws(boot_drawsSEXP);
+    rcpp_result_gen = Rcpp::wrap(foo(boot_draws));
     return rcpp_result_gen;
 END_RCPP
 }
 // testy
-List testy(arma::vec y, arma::vec Tobs, arma::vec z);
-RcppExport SEXP mbereg_testy(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
+List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws);
+RcppExport SEXP mbereg_testy(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP, SEXP normal_drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
     Rcpp::traits::input_parameter< arma::vec >::type Tobs(TobsSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
-    rcpp_result_gen = Rcpp::wrap(testy(y, Tobs, z));
+    Rcpp::traits::input_parameter< arma::mat >::type normal_draws(normal_drawsSEXP);
+    rcpp_result_gen = Rcpp::wrap(testy(y, Tobs, z, normal_draws));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -106,7 +107,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"mbereg_sqrtm_cpp", (DL_FUNC) &mbereg_sqrtm_cpp, 1},
     {"mbereg_cov2cor_cpp", (DL_FUNC) &mbereg_cov2cor_cpp, 1},
     {"mbereg_foo", (DL_FUNC) &mbereg_foo, 1},
-    {"mbereg_testy", (DL_FUNC) &mbereg_testy, 3},
+    {"mbereg_testy", (DL_FUNC) &mbereg_testy, 4},
     {NULL, NULL, 0}
 };
 

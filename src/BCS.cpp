@@ -56,18 +56,14 @@ arma::mat cov2cor_cpp(arma::mat V){
 }
 
 // [[Rcpp::export]]
-arma::mat foo(arma::mat V) {
-  arma::vec Is = arma::sqrt(1 / V.diag());
-  if(!arma::is_finite(Is)){
-    throw std::invalid_argument("One or more variances is zero or NaN!");
-  }
-  return arma::diagmat(Is) * V * arma::diagmat(Is);
+arma::mat foo(arma::mat boot_draws) {
+  return arma::sum(arma::pow(boot_draws.rows(2, 3), 2.0), 0);
 }
 
 
 class BCS {
 public:
-  BCS(const arma::vec&, const arma::vec&, const arma::vec&, const arma::mat&);
+  BCS(const arma::vec&, const arma::vec&, const arma::vec&);
   arma::mat get_Nu(double a1, double beta) {
     double theta1 = beta / (1 - a1);
     double theta2 = beta * theta1;
@@ -120,22 +116,33 @@ public:
     phi.elem(find(test_stats > kappa_n)).fill(arma::datum::inf);
     return phi;
   }
-  double get_Qn_DR(double a1, double beta) {
+  arma::vec get_Qn_DR(double a1, double beta, arma::mat normal_draws) {
+    arma::mat Sigma = get_Sigma(a1, beta);
+    arma::mat Omega_sqrt = sqrtm_cpp(cov2cor_cpp(Sigma));
+    arma::mat boot_draws = Omega_sqrt * normal_draws.t();
     arma::vec phi = get_phi(a1);
-    return 0;
+    int B = normal_draws.n_rows;
+    arma::vec Tn_DR_I(B, arma::fill::zeros);
+    arma::vec Tn_DR_E(B, arma::fill::zeros);
+    for(int b = 0; b < B; ++b){
+      arma::vec draw_b = boot_draws.col(b);
+      // Zero indexing in C++!
+      Tn_DR_I(b) = SS_neg(draw_b.rows(0, 1) + phi);
+      Tn_DR_E(b) = SS(draw_b.rows(2, 3));
+    }
+    return Tn_DR_I + Tn_DR_E;
   }
-  double get_Qn_PR_i(double a1, double beta, int i) {
+  double get_Qn_PR(double a1, double beta, arma::vec normal_draw) {
     return 0;
   }
 //private:
   int n;
   double kappa_n, q;
-  arma::mat W, W_tilde, boot_draws, Sigma_II, M_EE, M_IE;
+  arma::mat W, W_tilde, Sigma_II, M_EE, M_IE;
   arma::vec W_tilde_bar, w1_z0, w1_z1, w_z_bar, s_II;
 };
 //Class constructor
-BCS::BCS(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z,
-         const arma::mat& normal_draws) {
+BCS::BCS(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z) {
   n = y.n_elem;
   q = arma::mean(z);
   kappa_n = sqrt(log(n));
@@ -159,15 +166,16 @@ BCS::BCS(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z,
 }
 
 // [[Rcpp::export]]
-List testy(arma::vec y, arma::vec Tobs, arma::vec z){
-  BCS myBCS(y, Tobs, z, z);
-  double a1 = 0.5;
+List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws){
+  BCS myBCS(y, Tobs, z);
+  double a1 = 0.1;
   double beta = 1.0;
   arma::mat Nu = myBCS.get_Nu(a1, beta);
   arma::mat Sigma_EE = myBCS.get_Sigma_EE(a1, beta);
   arma::mat Sigma = myBCS.get_Sigma(a1, beta);
   double Qn = myBCS.get_Qn(a1, beta);
   arma::vec phi = myBCS.get_phi(a1);
+  arma::vec Tn_DR = myBCS.get_Qn_DR(a1, beta, normal_draws);
   return List::create(Named("W_tilde_bar") = myBCS.W_tilde_bar,
                       Named("M_EE") = myBCS.M_EE,
                       Named("w1_z0") = myBCS.w1_z0,
@@ -180,5 +188,6 @@ List testy(arma::vec y, arma::vec Tobs, arma::vec z){
                       Named("Sigma_EE") = Sigma_EE,
                       Named("Sigma") = Sigma,
                       Named("Qn") = Qn,
-                      Named("phi") = phi);
+                      Named("phi") = phi,
+                      Named("Tn_DR") = Tn_DR);
 }

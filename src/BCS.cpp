@@ -8,6 +8,8 @@ arma::mat center(arma::mat M) {
 }
 
 // [[Rcpp::export]]
+// Armadillo's covariance function requires that both matrices be of the same
+// dimension. Mine, like the one in base R, does not.
 arma::mat mycov(arma::mat M1, arma::mat M2) {
   assert(M1.n_rows == M2.n_rows);
   int n = M1.n_rows;
@@ -15,8 +17,8 @@ arma::mat mycov(arma::mat M1, arma::mat M2) {
 }
 
 // [[Rcpp::export]]
-arma::mat foo(arma::vec z, arma::mat W) {
-  return arma::repmat(z, 1, W.n_cols) % center(W);
+arma::vec foo(arma::vec z) {
+  return arma::ones(z.n_elem) - z;
 }
 
 
@@ -42,19 +44,26 @@ BCS::BCS(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z,
   W_tilde = arma::repmat(z, 1, W.n_cols) % center(W);
   W_tilde_bar = arma::mean(W_tilde).t();
   M_EE = arma::cov(W_tilde - q * W);
-  //w1_z0 = w1 % (arma::ones(n) - z) / (1 - q);
-  //w1_z1 = w1 % z / q;
-  //w_z_bar << arma::mean(w1_z0) << arma::endr
-  //        << arma::mean(w1_z1);
-  //Sigma_II = arma::var(arma::join_horiz(w1_z0, w1_z1));
-  //s_II = arma::sqrt(Sigma_II.diag());
-  //M_IE = arma::join_vert(mycov(w1_z0, q * W) - mycov(w1_z0, W_tilde),
-   //                      mycov(w1_z1, q * W) - mycov(w1_z1, W_tilde));
+  arma::vec z0 = arma::ones(z.n_elem) - z;
+  w1_z0 = w1 % z0 / (1 - q);
+  w1_z1 = w1 % z / q;
+  w_z_bar << arma::mean(w1_z0) << arma::endr
+          << arma::mean(w1_z1);
+  Sigma_II = arma::cov(arma::join_horiz(w1_z0, w1_z1));
+  s_II = arma::sqrt(Sigma_II.diag());
+  M_IE = arma::join_vert(mycov(w1_z0, q * W) - mycov(w1_z0, W_tilde),
+                         mycov(w1_z1, q * W) - mycov(w1_z1, W_tilde));
 }
 
 // [[Rcpp::export]]
 List testy(arma::vec y, arma::vec Tobs, arma::vec z){
   BCS myBCS(y, Tobs, z, z);
   return List::create(Named("W_tilde_bar") = myBCS.W_tilde_bar,
-                      Named("M_EE") = myBCS.M_EE);
+                      Named("M_EE") = myBCS.M_EE,
+                      Named("w1_z0") = myBCS.w1_z0,
+                      Named("w1_z1") = myBCS.w1_z1,
+                      Named("w_z_bar") = myBCS.w_z_bar,
+                      Named("Sigma_II") = myBCS.Sigma_II,
+                      Named("s_II") = myBCS.s_II,
+                      Named("M_IE") = myBCS.M_IE);
 }

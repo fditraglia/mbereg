@@ -74,13 +74,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // foo
-arma::mat foo(arma::mat boot_draws);
-RcppExport SEXP mbereg_foo(SEXP boot_drawsSEXP) {
+arma::mat foo(arma::mat M);
+RcppExport SEXP mbereg_foo(SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type boot_draws(boot_drawsSEXP);
-    rcpp_result_gen = Rcpp::wrap(foo(boot_draws));
+    Rcpp::traits::input_parameter< arma::mat >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(foo(M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bar
+arma::mat bar(arma::vec v);
+RcppExport SEXP mbereg_bar(SEXP vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(bar(v));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -98,6 +109,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// testFunctor
+double testFunctor(double x);
+RcppExport SEXP mbereg_testFunctor(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(testFunctor(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"mbereg_center", (DL_FUNC) &mbereg_center, 1},
@@ -107,7 +129,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"mbereg_sqrtm_cpp", (DL_FUNC) &mbereg_sqrtm_cpp, 1},
     {"mbereg_cov2cor_cpp", (DL_FUNC) &mbereg_cov2cor_cpp, 1},
     {"mbereg_foo", (DL_FUNC) &mbereg_foo, 1},
+    {"mbereg_bar", (DL_FUNC) &mbereg_bar, 1},
     {"mbereg_testy", (DL_FUNC) &mbereg_testy, 4},
+    {"mbereg_testFunctor", (DL_FUNC) &mbereg_testFunctor, 1},
     {NULL, NULL, 0}
 };
 

@@ -25,11 +25,19 @@ cov2cor_cpp <- function(V) {
     .Call('mbereg_cov2cor_cpp', PACKAGE = 'mbereg', V)
 }
 
-foo <- function(boot_draws) {
-    .Call('mbereg_foo', PACKAGE = 'mbereg', boot_draws)
+foo <- function(M) {
+    .Call('mbereg_foo', PACKAGE = 'mbereg', M)
+}
+
+bar <- function(v) {
+    .Call('mbereg_bar', PACKAGE = 'mbereg', v)
 }
 
 testy <- function(y, Tobs, z, normal_draws) {
     .Call('mbereg_testy', PACKAGE = 'mbereg', y, Tobs, z, normal_draws)
+}
+
+testFunctor <- function(x) {
+    .Call('mbereg_testFunctor', PACKAGE = 'mbereg', x)
 }
 

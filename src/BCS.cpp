@@ -56,8 +56,13 @@ arma::mat cov2cor_cpp(arma::mat V){
 }
 
 // [[Rcpp::export]]
-arma::mat foo(arma::mat boot_draws) {
-  return arma::sum(arma::pow(boot_draws.rows(2, 3), 2.0), 0);
+arma::mat foo(arma::mat M) {
+  return arma::fliplr(M);
+}
+
+// [[Rcpp::export]]
+arma::mat bar(arma::vec v) {
+  return arma::flipud(v);
 }
 
 
@@ -190,4 +195,40 @@ List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws){
                       Named("Qn") = Qn,
                       Named("phi") = phi,
                       Named("Tn_DR") = Tn_DR);
+}
+
+double test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z){
+  return 0;
+}
+
+
+class baz {
+public:
+  baz(double, double);
+  double c;
+  double f(double x, double k) {
+    return -c * pow(x, 2.0) + k;
+  }
+};
+baz::baz(double a, double b){
+  c = fabs(a + b) + 1.0;
+}
+
+class myFunctorClass
+{
+public:
+  myFunctorClass (baz mybaz_, double k_) : mybaz( mybaz_ ), k( k_ ) {}
+  double operator() (double x) {
+    return mybaz.f(x, k);
+    }
+private:
+  baz mybaz;
+  double k;
+};
+
+// [[Rcpp::export]]
+double testFunctor(double x) {
+  baz mybaz(1.0, 2.0);
+  myFunctorClass f(mybaz, -1.0);
+  return f(x);
 }

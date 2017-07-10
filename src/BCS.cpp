@@ -140,7 +140,17 @@ public:
     return Tn_DR_I + Tn_DR_E;
   }
   double get_Qn_PR(double a1, double beta, arma::vec normal_draw) {
-    return 0;
+    arma::mat Sigma = get_Sigma(a1, beta);
+    arma::mat Omega_sqrt = sqrtm_cpp(cov2cor_cpp(Sigma));
+    arma::vec boot_draw = Omega_sqrt * normal_draw;
+    arma::vec mbar_I = get_mbar_I(a1);
+    arma::vec ell_I = sqrt(n) * mbar_I / (kappa_n * s_II);
+    arma::vec mbar_E = get_mbar_E(a1, beta);
+    double Tn_PR_I = SS_neg(boot_draw.rows(0, 1) + ell_I); // zero-indexing!
+    arma::vec s_EE = get_s_EE(a1, beta);
+    arma::vec ell_E = sqrt(n) * mbar_E / (kappa_n * s_EE);
+    double Tn_PR_E = SS(boot_draw.rows(2, 3) + ell_E); // zero-indexing!
+    return Tn_PR_I + Tn_PR_E;
   }
 //private:
   int n;
@@ -199,10 +209,24 @@ List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws){
                       Named("Tn_DR") = Tn_DR);
 }
 
-class Qn: public brent::func_base
+// Functor for the optimization of Qn from which we calculate Tn
+class Qn_Functor: public brent::func_base
 {
 public:
-  Qn (BCS myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
+  Qn_Functor (BCS myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
+  double operator() (double a1) {
+    return myBCS.get_Qn(a1, beta_null);
+    }
+private:
+  BCS myBCS;
+  double beta_null;
+};
+
+// Functor for the optimization of Qn_DR from which we calculate Tn_DR
+class Qn_PR_Functor: public brent::func_base
+{
+public:
+  Qn_PR_Functor (BCS myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
   double operator() (double a1) {
     return myBCS.get_Qn(a1, beta_null);
     }
@@ -214,14 +238,14 @@ private:
 // [[Rcpp::export]]
 double test_Qn(double a1, arma::vec y, arma::vec Tobs, arma::vec z){
   BCS myBCS(y, Tobs, z);
-  Qn myQn(myBCS, 1.0);
+  Qn_Functor myQn(myBCS, 1.0);
   return myQn(a1);
 }
 
 // [[Rcpp::export]]
 List test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z){
   BCS myBCS(y, Tobs, z);
-  Qn myQn(myBCS, 1.0);
+  Qn_Functor myQn(myBCS, 1.0);
   double a1_star;
   double Qn_star = brent::local_min(0.0, 0.99, 0.0001, myQn, a1_star);
   return List::create(Named("minimum") = a1_star, Named("objective") = Qn_star);

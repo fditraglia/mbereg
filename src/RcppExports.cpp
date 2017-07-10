@@ -136,24 +136,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// f
-double f(double x);
-RcppExport SEXP mbereg_f(SEXP xSEXP) {
+// BCS_test_cpp
+List BCS_test_cpp(double beta_null, arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws);
+RcppExport SEXP mbereg_BCS_test_cpp(SEXP beta_nullSEXP, SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP, SEXP normal_drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(f(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// min_f
-List min_f();
-RcppExport SEXP mbereg_min_f() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(min_f());
+    Rcpp::traits::input_parameter< double >::type beta_null(beta_nullSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Tobs(TobsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type normal_draws(normal_drawsSEXP);
+    rcpp_result_gen = Rcpp::wrap(BCS_test_cpp(beta_null, y, Tobs, z, normal_draws));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -170,8 +164,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"mbereg_testy", (DL_FUNC) &mbereg_testy, 4},
     {"mbereg_test_Qn", (DL_FUNC) &mbereg_test_Qn, 4},
     {"mbereg_test_Qn_opt", (DL_FUNC) &mbereg_test_Qn_opt, 3},
-    {"mbereg_f", (DL_FUNC) &mbereg_f, 1},
-    {"mbereg_min_f", (DL_FUNC) &mbereg_min_f, 0},
+    {"mbereg_BCS_test_cpp", (DL_FUNC) &mbereg_BCS_test_cpp, 5},
     {NULL, NULL, 0}
 };
 

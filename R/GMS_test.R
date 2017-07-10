@@ -18,7 +18,6 @@ get_test_stat <- function(m, Sigma, p){
 #     Returns M_sqrt such that all.equal(M, M_sqrt %*% t(M_sqrt)) is TRUE.
 #----------------------------------------------------------------------------
 sqrtm <- function(M, tol = 1e-06){
-  stopifnot(isSymmetric(M))
   p <- nrow(M)
   eM <- eigen(M, symmetric = TRUE)
   ev <- eM$values

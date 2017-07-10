@@ -45,11 +45,7 @@ test_Qn_opt <- function(y, Tobs, z) {
     .Call('mbereg_test_Qn_opt', PACKAGE = 'mbereg', y, Tobs, z)
 }
 
-f <- function(x) {
-    .Call('mbereg_f', PACKAGE = 'mbereg', x)
-}
-
-min_f <- function() {
-    .Call('mbereg_min_f', PACKAGE = 'mbereg')
+BCS_test_cpp <- function(beta_null, y, Tobs, z, normal_draws) {
+    .Call('mbereg_BCS_test_cpp', PACKAGE = 'mbereg', beta_null, y, Tobs, z, normal_draws)
 }
 

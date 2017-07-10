@@ -68,9 +68,9 @@ arma::mat bar(arma::vec v) {
 }
 
 
-class BCS {
+class BCSclass {
 public:
-  BCS(const arma::vec&, const arma::vec&, const arma::vec&);
+  BCSclass(const arma::vec&, const arma::vec&, const arma::vec&);
   arma::mat get_Nu(double a1, double beta) {
     double theta1 = beta / (1 - a1);
     double theta2 = beta * theta1;
@@ -159,7 +159,7 @@ public:
   arma::vec W_tilde_bar, w1_z0, w1_z1, w_z_bar, s_II;
 };
 //Class constructor
-BCS::BCS(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z) {
+BCSclass::BCSclass(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z) {
   n = y.n_elem;
   q = arma::mean(z);
   kappa_n = sqrt(log(n));
@@ -184,7 +184,7 @@ BCS::BCS(const arma::vec& y, const arma::vec& Tobs, const arma::vec& z) {
 
 // [[Rcpp::export]]
 List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws){
-  BCS myBCS(y, Tobs, z);
+  BCSclass myBCS(y, Tobs, z);
   double a1 = 0.1;
   double beta = 1.0;
   arma::mat Nu = myBCS.get_Nu(a1, beta);
@@ -213,12 +213,12 @@ List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws){
 class Qn_Functor: public brent::func_base
 {
 public:
-  Qn_Functor (BCS myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
+  Qn_Functor (BCSclass myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
   double operator() (double a1) {
     return myBCS.get_Qn(a1, beta_null);
     }
 private:
-  BCS myBCS;
+  BCSclass myBCS;
   double beta_null;
 };
 
@@ -226,28 +226,83 @@ private:
 class Qn_PR_Functor: public brent::func_base
 {
 public:
-  Qn_PR_Functor (BCS myBCS_, double beta_null_) : myBCS(myBCS_), beta_null(beta_null_) {}
+  Qn_PR_Functor (BCSclass myBCS_, double beta_null_,
+                 arma::vec normal_draw_) : myBCS(myBCS_),
+                                          beta_null(beta_null_),
+                                          normal_draw(normal_draw_){}
   double operator() (double a1) {
-    return myBCS.get_Qn(a1, beta_null);
+    return myBCS.get_Qn_PR(a1, beta_null, normal_draw);
     }
 private:
-  BCS myBCS;
+  BCSclass myBCS;
   double beta_null;
+  arma::vec normal_draw;
 };
 
 // [[Rcpp::export]]
 double test_Qn(double a1, arma::vec y, arma::vec Tobs, arma::vec z){
-  BCS myBCS(y, Tobs, z);
+  BCSclass myBCS(y, Tobs, z);
   Qn_Functor myQn(myBCS, 1.0);
   return myQn(a1);
 }
 
 // [[Rcpp::export]]
 List test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z){
-  BCS myBCS(y, Tobs, z);
+  BCSclass myBCS(y, Tobs, z);
   Qn_Functor myQn(myBCS, 1.0);
   double a1_star;
   double Qn_star = brent::local_min(0.0, 0.99, 0.0001, myQn, a1_star);
   return List::create(Named("minimum") = a1_star, Named("objective") = Qn_star);
 }
+
+// [[Rcpp::export]]
+List BCS_test_cpp(double beta_null, arma::vec y, arma::vec Tobs, arma::vec z,
+                  arma::mat normal_draws) {
+
+  // Preliminary calculations and intitializations
+  BCSclass BCS(y, Tobs, z);
+  double opt_tol = 0.0001;
+  double a1_lower = 0.0;
+  double a1_upper = 0.99;
+
+  // Add beta_null == 0 case later
+
+  // Calculate Tn
+  Qn_Functor Qn(BCS, beta_null);
+  double a1_star;
+  double Tn = brent::local_min(a1_lower, a1_upper, opt_tol, Qn, a1_star);
+
+  // Calculate bootstrap draws of Tn_DR
+  arma::vec Tn_DR = BCS.get_Qn_DR(a1_star, beta_null, normal_draws);
+
+  // Calculate bootstrap draws of Tn_PR
+  int B = normal_draws.n_rows;
+  arma::vec Tn_PR(B, arma::fill::zeros);
+  for(int b = 0; b < B; ++b){
+    arma::vec normal_draw_b = normal_draws.row(b).t();
+    Qn_PR_Functor Qn_DR_b(BCS, beta_null, normal_draw_b);
+    double a1_star_b;
+    Tn_PR(b) =  brent::local_min(a1_lower, a1_upper, opt_tol, Qn_DR_b, a1_star_b);
+  }
+
+  return List::create(Named("a1_star") = a1_star,
+                      Named("Tn") = Tn,
+                      Named("Tn_DR") = Tn_PR,
+                      Named("Tn_PR") = Tn_DR);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -43,6 +43,11 @@ sqrtm <- function(M, tol = 1e-06){
 # - normal_sims is a (??? \times R) matrix of standard normal random draws
 #----------------------------------------------------------------------------
 GMS_test <- function(a0, a1, beta, dat, normal_sims){
+
+  if((a0 > 0.99) || (a0 < 0)) return(0)
+  if((a1 > 0.99) || (a1 < 0)) return(0)
+  if(a0 + a1 > 0.99) return(0)
+
   Tobs <- dat$Tobs
   y <- dat$y
   z <- dat$z

@@ -157,7 +157,13 @@ GMS_test <- function(a0, a1, beta, dat, normal_sims){
   # Calculate the p-value of asymptotic test
   Omega_n <- cov2cor(Sigma_n)
   M_star <- sqrtm(Omega_n) %*% normal_sims
-  T_n_star <- apply(M_star, 2, function(x) get_test_stat(x + phi, Omega_n, n_ineq))
+  M_star_GMS <- M_star + phi
+  M_star_GMS_I <- M_star_GMS[1:n_ineq,]
+  M_star_GMS_I[!is.finite(M_star_GMS_I)] <- 0
+  M_star_GMS_I <- M_star_GMS_I * (M_star_GMS_I < 0)
+  M_star_GMS_E <- M_star_GMS[(n_ineq + 1):(n_ineq + n_eq),]
+  M_star_GMS <- rbind(M_star_GMS_I, M_star_GMS_E)
+  T_n_star <- colSums(M_star_GMS^2)
   return(mean(T_n_star > T_n))
 }
 

@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------------
-# GMS test for our example:
+# GMS test for our example but using only first moment inequalities
 #----------------------------------------------------------------------------
-#     No restrictions on a0 or a1, "weak" and second moment bounds, and
+#     No restrictions on a0 or a1, "weak" moment inequalities, along with
 #     preliminary estimators of strongly identified parameters with appropriate
 #     adjustment to the GMS variance matrix estimator. Based on the "asymptotic"
 #     version of GMS, i.e. the version that makes standard normal draws to
@@ -24,95 +24,46 @@ GMS_test <- function(a0, a1, beta, dat, normal_sims){
   z <- dat$z
   q <- mean(z) # treat this as fixed in repeated sampling
   n <- nrow(dat)
+  kappa_n <- sqrt(log(n))
 
   theta1 <- beta / (1 - a0 - a1)
-  theta2 <- theta1^2 * (1 + (a0 - a1))
-  theta3 <- theta1^3 * ((1 - a0 - a1)^2 + 6 * a0 * (1 - a1))
+  a2 <- (1 + (a0 - a1))
+  a3 <- ((1 - a0 - a1)^2 + 6 * a0 * (1 - a1))
+  theta2 <- theta1^2 * a2
+  theta3 <- theta1^3 * a3
 
-  # Moment functions for preliminary estimators
-  h_p0 <- Tobs * (1 - z) / (1 - q)
-  h_p1 <- Tobs * z / q
-  h_nu_00 <- y * (1 - Tobs) * (1 - z) / sqrt(1 - q)
-  h_nu_10 <- y * Tobs * (1 - z) / sqrt(1 - q)
-  h_nu_01 <- y * (1 - Tobs) * z / sqrt(q)
-  h_nu_11 <- y * Tobs * z / sqrt(q)
-  h_k1 <- y - theta1 * Tobs
-  h_k2 <- y^2 - theta1 * 2 * y * Tobs + theta2 * Tobs
-  h_k3 <- y^3 - theta1 * 3 * y^2 * Tobs + theta2 * 3 * y * Tobs - theta3 * Tobs
-  h <- cbind(h_p0, h_p1, h_nu_00, h_nu_10, h_nu_01, h_nu_11, h_k1, h_k2, h_k3)
+  # Functions of the data
+  w <- cbind(Tobs, y, y * Tobs, y^2, y^2 * Tobs, y^3)
+  w_bar <- colMeans(w)
+  w_centered <- scale(w, scale = FALSE, center = TRUE)
+  w_centered_z <- (w_centered * z)
+  wz_bar <- colMeans(w * z)
 
-  # Preliminary estimators
-  p0 <- mean(h_p0)
-  p1 <- mean(h_p1)
-  nu_00 <- mean(h_nu_00)
-  nu_10 <- mean(h_nu_10)
-  nu_01 <- mean(h_nu_01)
-  nu_11 <- mean(h_nu_11)
-  k1 <- mean(h_k1)
-  k2 <- mean(h_k2)
-  k3 <- mean(h_k3)
-  gamma <- c(p0, p1, nu_00, nu_10, nu_01, nu_11, k1, k2, k3)
+  psi1 <- c(-theta1, 1, 0, 0, 0, 0)
+  psi2 <- c(theta2, 0, -2 * theta1, 1, 0, 0)
+  psi3 <- c(-theta3, 0, 3 * theta2, 0, -3 * theta1, 1)
+  Psi <- cbind(psi1, psi2, psi3)
 
-  # Make sure I've ordered the parameters consistently
-  stopifnot(all.equal(gamma, colMeans(h), check.attributes = FALSE))
-
-  # Equality moment conditions
-  u1 <- h_k1 - k1
-  u2 <- h_k2 - k2
-  u3 <- h_k3 - k3
-  mE <- z * cbind(u1, u2, u3)
-
-  # First-moment Inequalities
-  mI_1 <- cbind(rep(p0 - a0, n),
-                rep(1 - p0 - a1, n),
-                rep(p1 - a0, n),
-                rep(1 - p1 - a1, n))
-
-  # Second-moment Inequalities
-  y2_a0_z0 <- y^2 * (1 - z) * (Tobs - a0)
-  d_a0_z0 <- (1 - a0) * nu_10 - a0 * nu_00
-
-  y2_a1_z0 <- y^2 * (1 - z) * (1 - Tobs - a1)
-  d_a1_z0 <- a1 * nu_10 - (1 - a1) * nu_00
-
-  y2_a0_z1 <- y^2 * z * (Tobs - a0)
-  d_a0_z1 <- (1 - a0) * nu_11 - a0 * nu_01
-
-  y2_a1_z1 <- y^2 * z * (1 - Tobs - a1)
-  d_a1_z1 <- a1 * nu_11 - (1 - a1) * nu_01
-
-  mI_2 <- cbind((p0 - a0) * y2_a0_z0 - d_a0_z0^2,
-                (1 - p0 - a1) * y2_a1_z0 - d_a1_z0^2,
-                (p1 - a0) * y2_a0_z1 - d_a0_z1^2,
-                (1 - p1 - a1) * y2_a1_z1 - d_a1_z1^2)
-
-  # Full set of Inequalities
-  mI <- cbind(mI_1, mI_2)
-
-  # Full set of moment conditions
+  # Moment functions
+  h <- w_centered %*% Psi
+  mI <- cbind(Tobs * (1 - z) / (1 - q) - a0,
+              (1 - Tobs) * (1 - z) / (1 - q) - a1,
+              Tobs * z / q - a0,
+              (1 - Tobs) * z / q - a1)
+  mE <- w_centered_z %*% Psi
   m <- cbind(mI, mE)
 
-  # Expected derivative matrix to account for preliminary estimation
-  B_I1_p <- cbind(c(1, -1, 0, 0),
-                  c(0, 0, 1, -1))
-  B_I1 <- cbind(B_I1_p, matrix(0, 4, 4), matrix(0, 4, 3))
-  B_I2_p <- matrix(c( mean(y2_a0_z0), 0,
-                     -mean(y2_a1_z0), 0,
-                      0, mean(y2_a0_z1),
-                      0, -mean(y2_a1_z1)),
-                   4, 2, byrow = TRUE)
-  B_I2_nu <- matrix(c(2 * a0 * d_a0_z0, -2 * (1 - a0) * d_a0_z0, 0, 0,
-                      2 * (1 - a1) * d_a1_z0, -2 * a1 * d_a1_z0, 0, 0,
-                      0, 0, 2 * a0 * d_a0_z1, -2 * (1 - a0) * d_a0_z1,
-                      0, 0, 2 * (1 - a1) * d_a1_z1, -2 * a1 * d_a1_z1),
-                    4, 4, byrow = TRUE)
-  B_I2 <- cbind(B_I2_p, B_I2_nu, matrix(0, 4, 3))
-  B_E <- cbind(matrix(0, 3, 2), matrix(0, 3, 4), -q * diag(3))
-  B <- rbind(B_I1, B_I2, B_E)
+  # Derivative matrices to adjust variance for preliminary estimation
+  MI <- matrix(0, nrow = 4, ncol = 3)
+  ME <- -q * diag(3)
+  M <- rbind(MI, ME)
+  H <- -diag(3)
 
-  # Estimate of asymptotic variance matrix of m
+  # Adjust the variance matrix
+  V <- var(cbind(m, h))
+  B <- -1 * M %*% solve(H)
   A <- cbind(diag(nrow(B)), B)
-  Sigma_n <- A %*% var(cbind(m, h)) %*% t(A)
+  Sigma_n <- A %*% V %*% t(A)
 
   # Calculate test statistic
   m_bar <- colMeans(m)

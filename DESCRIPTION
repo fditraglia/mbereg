@@ -9,5 +9,5 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Imports: Rcpp (>= 0.12.11), MASS, mvtnorm
+Imports: Rcpp (>= 0.12.11), MASS, mvtnorm, AER
 LinkingTo: Rcpp, RcppArmadillo

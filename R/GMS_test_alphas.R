@@ -56,15 +56,18 @@ GMS_test_alphas <- function(a0, a1, dat, normal_sims){
   ME <- cbind(ME_kappa, ME_theta1)
   M <- rbind(MI, ME)
 
-  H_kappa <- rbind(-1 * diag(3),
-                   c(-q, 0, 0))
-  H_theta1 <- rbind(crossprod(D_Psi, w_bar),
-                    crossprod(D_psi1, wz_bar))
-  H <- cbind(H_kappa, H_theta1)
+  p <- w_bar[1]
+  p1_q <- wz_bar[1]
+  d2_w <- drop(crossprod(D_psi2, w_bar))
+  d3_w <- drop(crossprod(D_psi3, w_bar))
+  H_inv <- matrix(c(p1_q, 0, 0, -p,
+                    -q * d2_w, -(p * q - p1_q), 0, d2_w,
+                    -q * d3_w, 0, -(p * q - p1_q), d3_w,
+                    -q, 0, 0, 1), byrow = TRUE, nrow = 4, ncol = 4) / (p * q - p1_q)
 
   # Adjust the variance matrix
   V <- var(cbind(m, h))
-  B <- -1 * M %*% solve(H)
+  B <- -1 * M %*% H_inv
   A <- cbind(diag(nrow(B)), B)
   Sigma_n <- A %*% V %*% t(A)
 

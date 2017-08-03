@@ -1,5 +1,7 @@
 # This test substitutes a preliminary estimator of theta1 and uses only the
-# first moment inequalities.
+# first moment inequalities. This version should be faster since it avoids
+# unnecessary calculations by dropping inequalities that are far from binding
+# rather than carrying them around until the end.
 GMS_test_alphas <- function(a0, a1, dat, normal_sims){
 
   if((a0 > 0.99) || (a0 < 0)) return(0)
@@ -77,21 +79,20 @@ GMS_test_alphas <- function(a0, a1, dat, normal_sims){
   n_eq <- ncol(mE)
   T_n <- get_test_stat(sqrt(n) * m_bar, Sigma_n, n_ineq)
 
-  # Carry out moment selection on the inequality conditions
+  # Calculate p-value of asymptotic test, only keeping inequalities that are
+  # *far* from binding
   s_n <- sqrt(diag(Sigma_n))
-  phi <- c(ifelse((sqrt(n) * m_bar[1:n_ineq] / s_n[1:n_ineq]) > sqrt(log(n)),
-                  Inf, 0), rep(0, n_eq))
-
-  # Calculate the p-value of asymptotic test
-  Omega_n <- cov2cor(Sigma_n)
-  M_star <- sqrtm(Omega_n) %*% normal_sims
-  M_star_GMS <- M_star + phi
-  M_star_GMS_I <- M_star_GMS[1:n_ineq,]
-  M_star_GMS_I[!is.finite(M_star_GMS_I)] <- 0
-  M_star_GMS_I <- M_star_GMS_I * (M_star_GMS_I < 0)
-  M_star_GMS_E <- M_star_GMS[(n_ineq + 1):(n_ineq + n_eq),]
-  M_star_GMS <- rbind(M_star_GMS_I, M_star_GMS_E)
+  keep_ineq <- (sqrt(n) * m_bar[1:n_ineq] / s_n[1:n_ineq]) <= sqrt(log(n))
+  n_keep_ineq <- sum(keep_ineq)
+  keep <- c(keep_ineq, rep(TRUE, n_eq))
+  Omega_n_GMS <- cov2cor(Sigma_n[keep, keep])
+  M_star_GMS <- sqrtm(Omega_n_GMS) %*% normal_sims[keep,]
+  if(sum(n_keep_ineq) > 0){
+    M_star_GMS_I <- M_star_GMS[1:n_keep_ineq,,drop=FALSE]
+    M_star_GMS_I <- M_star_GMS_I * (M_star_GMS_I < 0)
+    M_star_GMS_E <- M_star_GMS[-c(1:n_keep_ineq),,drop=FALSE]
+    M_star_GMS <- rbind(M_star_GMS_I, M_star_GMS_E)
+  }
   T_n_star <- colSums(M_star_GMS^2)
   return(mean(T_n_star > T_n))
-
 }

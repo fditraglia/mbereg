@@ -1,4 +1,4 @@
-sim_alphas_size <- function(true_params, normal_sims, nreps = 1000,
+sim_alphas_size <- function(true_params, normal_sims, ncores, nreps = 1000,
                               test_alphas = GMS_test_alphas){
   sim_rep <- function(){
     sim_dat <- dgp(a0 = true_params$a0,
@@ -14,7 +14,8 @@ sim_alphas_size <- function(true_params, normal_sims, nreps = 1000,
                           normal_sims = normal_sims)
     return(pvalue)
   }
-  return(replicate(nreps, sim_rep()))
+  return(parallel::mclapply(1:nreps, function(i) sim_rep(), mc.cores = ncores))
+  #return(replicate(nreps, sim_rep()))
 }
 
 sim_bonf_CI <- function(true_params, normal_sims, delta1, delta2, ncores,
@@ -35,5 +36,4 @@ sim_bonf_CI <- function(true_params, normal_sims, delta1, delta2, ncores,
     return(CIs)
   }
   return(parallel::mclapply(1:nreps, function(i) sim_rep(), mc.cores = ncores))
-  #return(replicate(nreps, sim_rep()))
 }

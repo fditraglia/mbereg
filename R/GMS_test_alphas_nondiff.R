@@ -121,38 +121,43 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
                mI2_under_01, mI2_over_01,
                mI2_under_11, mI2_over_11)
 
-
-
-  # Moment functions
-  hE <- cbind(w_centered %*% Psi , w_centered_z %*% psi1)
+  # First moment inequalities
   mI1 <- cbind((1 - z) * (Tobs - a0),
                (1 - z) * (1 - Tobs - a1),
                z * (Tobs - a0),
                z * (1 - Tobs - a1))
+
+  # Preliminary estimators and moment functions for equality conditions
+  hE <- cbind(w_centered %*% Psi , w_centered_z %*% psi1)
   mE <- w_centered_z %*% Psi[,2:3]
+
+  # Stack all moment conditions
+  h <- cbind(hI, hE)
   mI <- cbind(mI1, mI2)
   m <- cbind(mI, mE)
 
   # Derivative matrices to adjust variance for preliminary estimation
-  MI <- matrix(0, nrow = 4, 4)
   ME_kappa <- matrix(c(0, -q, 0,
                        0, 0, -q), nrow = 2, ncol = 3, byrow = TRUE)
   ME_theta1 <- crossprod(D_Psi[,2:3], wz_bar)
   ME <- cbind(ME_kappa, ME_theta1)
-  M <- rbind(MI, ME)
 
   p <- w_bar[1]
   p1_q <- wz_bar[1]
   d2_w <- drop(crossprod(D_psi2, w_bar))
   d3_w <- drop(crossprod(D_psi3, w_bar))
-  H_inv <- matrix(c(p1_q, 0, 0, -p,
-                    -q * d2_w, -(p * q - p1_q), 0, d2_w,
-                    -q * d3_w, 0, -(p * q - p1_q), d3_w,
-                    -q, 0, 0, 1), byrow = TRUE, nrow = 4, ncol = 4) / (p * q - p1_q)
+  HE_inv <- matrix(c(p1_q, 0, 0, -p,
+                     -q * d2_w, -(p * q - p1_q), 0, d2_w,
+                     -q * d3_w, 0, -(p * q - p1_q), d3_w,
+                     -q, 0, 0, 1), byrow = TRUE, nrow = 4, ncol = 4) / (p * q - p1_q)
+  BE <- -ME %*% HE_inv
+  BI <- (1 - a0 - a1) * diag(quantiles / rep(c(rep(a1, 2), rep(1 - a1, 2)), 2))
+  B <- rbind(matrix(0, 4, 12),
+             cbind(BI, matrix(0, 8, 4)),
+             cbind(matrix(0, 2, 8), BE))
 
   # Adjust the variance matrix
   V <- var(cbind(m, h))
-  B <- -1 * M %*% H_inv
   A <- cbind(diag(nrow(B)), B)
   Sigma_n <- A %*% V %*% t(A)
 

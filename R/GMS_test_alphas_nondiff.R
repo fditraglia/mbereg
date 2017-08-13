@@ -41,13 +41,18 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
   D_psi3 <- c(-3 * a3 * theta1^2, 0, 6 * a2 * theta1, 0, -3, 0)
   D_Psi <- cbind(D_psi1, D_psi2, D_psi3)
 
-  # Calculate the quantiles
+  # Calculate the quantiles, ensuring that they are always valid, and never
+  # equal the sample max or min by "trimming" the r_tk but do so in a way that
+  # is asymptotically negligible even when scaled up by sqrt(n)
   p0 <- mean(Tobs[z == 0])
   p1 <- mean(Tobs[z == 1])
-  r00 <- (a1 / (1 - p0)) * (p0 - a0) / (1 - a0 - a1)
-  r10 <- ((1 - a1) / p0) * (p0 - a0) / (1 - a0 - a1)
-  r01 <- (a1 / (1 - p1)) * (p1 - a0) / (1 - a0 - a1)
-  r11 <- ((1 - a1) / p1) * (p1 - a0) / (1 - a0 - a1)
+  epsilon <- 2 / (sqrt(n) * log(n))
+  r_min <- 0 + epsilon
+  r_max <- 1 - epsilon
+  r00 <- max(r_min, min(r_max, (a1 / (1 - p0)) * (p0 - a0) / (1 - a0 - a1)))
+  r10 <- max(r_min, min(r_max, ((1 - a1) / p0) * (p0 - a0) / (1 - a0 - a1)))
+  r01 <- max(r_min, min(r_max, (a1 / (1 - p1)) * (p1 - a0) / (1 - a0 - a1)))
+  r11 <- max(r_min, min(r_max, ((1 - a1) / p1) * (p1 - a0) / (1 - a0 - a1)))
   q_under_00 <- quantile(y[Tobs == 0 & z == 0], r00)
   q_over_00 <- quantile(y[Tobs == 0 & z == 0], 1 - r00)
   q_under_10 <- quantile(y[Tobs == 1 & z == 0], r10)
@@ -62,59 +67,83 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
                  q_under_11, q_over_11)
 
   # Moment equalities for preliminary estimation of quantiles
-  hI_under_00 <- (y <= q_under_00) * (z == 0) * (1 - Tobs) -
-    (a1 / (1 - a0 - a1)) * (z == 0) * (Tobs - a0)
-  hI_over_00 <- (y <= q_over_00) * (z == 0) * (1 - Tobs) -
-    ((1 - a0) / (1 - a0 - a1)) * (z == 0) * (1 - Tobs - a1)
+  if(a1 != 0){
+    hI_under_00 <- (y <= q_under_00) * (z == 0) * (1 - Tobs) -
+      (a1 / (1 - a0 - a1)) * (z == 0) * (Tobs - a0)
+    hI_over_00 <- (y <= q_over_00) * (z == 0) * (1 - Tobs) -
+      ((1 - a0) / (1 - a0 - a1)) * (z == 0) * (1 - Tobs - a1)
+  } else {
+    hI_under_00 <- hI_over_00 <- rep(0, n)
+  }
 
-  hI_under_10 <- (y <= q_under_10) * (z == 0) * Tobs -
-    ((1 - a1) / (1 - a0 - a1)) * (z == 0) * (Tobs - a0)
-  hI_over_10 <- (y <= q_over_10) * (z == 0) * Tobs -
-    (a0 / (1 - a0 - a1)) * (z == 0) * (1 - Tobs - a1)
+  if(a0 != 0){
+    hI_under_10 <- (y <= q_under_10) * (z == 0) * Tobs -
+      ((1 - a1) / (1 - a0 - a1)) * (z == 0) * (Tobs - a0)
+    hI_over_10 <- (y <= q_over_10) * (z == 0) * Tobs -
+      (a0 / (1 - a0 - a1)) * (z == 0) * (1 - Tobs - a1)
+  } else {
+    hI_under_10 <- hI_over_10 <- rep(0, n)
+  }
 
-  hI_under_01 <- (y <= q_under_01) * (z == 1) * (1 - Tobs) -
-    (a1 / (1 - a0 - a1)) * (z == 1) * (Tobs - a0)
-  hI_over_01 <- (y <= q_over_01) * (z == 1) * (1 - Tobs) -
-    ((1 - a0) / (1 - a0 - a1)) * (z == 1) * (1 - Tobs - a1)
+  if(a1 != 0){
+    hI_under_01 <- (y <= q_under_01) * (z == 1) * (1 - Tobs) -
+      (a1 / (1 - a0 - a1)) * (z == 1) * (Tobs - a0)
+    hI_over_01 <- (y <= q_over_01) * (z == 1) * (1 - Tobs) -
+      ((1 - a0) / (1 - a0 - a1)) * (z == 1) * (1 - Tobs - a1)
+  } else {
+    hI_under_01 <- hI_over_01 <- rep(0, n)
+  }
 
-  hI_under_11 <- (y <= q_under_11) * (z == 1) * Tobs -
-    ((1 - a1) / (1 - a0 - a1)) * (z == 1) * (Tobs - a0)
-  hI_over_11 <- (y <= q_over_11) * (z == 1) * Tobs -
-    (a0 / (1 - a0 - a1)) * (z == 1) * (1 - Tobs - a1)
+  if(a0 != 0){
+    hI_under_11 <- (y <= q_under_11) * (z == 1) * Tobs -
+      ((1 - a1) / (1 - a0 - a1)) * (z == 1) * (Tobs - a0)
+    hI_over_11 <- (y <= q_over_11) * (z == 1) * Tobs -
+      (a0 / (1 - a0 - a1)) * (z == 1) * (1 - Tobs - a1)
+  } else {
+    hI_under_11 <- hI_over_11 <- rep(0, n)
+  }
 
   hI <- cbind(hI_under_00, hI_over_00,
               hI_under_10, hI_over_10,
               hI_under_01, hI_over_01,
               hI_under_11, hI_over_11)
 
-  #-----------------------------------------------------
-  #-----------------------------------------------------
-  #-----------------------------------------------------
-  # BE CAREFUL ABOUT a1 = 0, 1 and a0 = 0, 1
-  #-----------------------------------------------------
-  #-----------------------------------------------------
-  #-----------------------------------------------------
-
   # Inequalities for non-differential measurement error
-  mI2_under_00 <- (y * (z == 0) * (Tobs - a0)) -
-    ((1 - a0 - a1) / a1) * y * (y <= q_under_00) * (z == 0) * (1 - Tobs)
-  mI2_over_00 <- (-y * (z == 0) * (Tobs - a0)) +
-    ((1 - a0 - a1) / a1) * y * (y > q_over_00) * (z == 0) * (1 - Tobs)
+  if(a1 != 0){
+    mI2_under_00 <- (y * (z == 0) * (Tobs - a0)) -
+      ((1 - a0 - a1) / a1) * y * (y <= q_under_00) * (z == 0) * (1 - Tobs)
+    mI2_over_00 <- (-y * (z == 0) * (Tobs - a0)) +
+      ((1 - a0 - a1) / a1) * y * (y > q_over_00) * (z == 0) * (1 - Tobs)
+  } else {
+    mI2_under_00 <- mI2_over_00 <- rep(0, n)
+  }
 
-  mI2_under_10 <- (y * (z == 0) * (Tobs - a0)) -
-    ((1 - a0 - a1) / (1 - a1)) * y * (y <= q_under_10) * (z == 0) * Tobs
-  mI2_over_10 <- (-y * (z == 0) * (Tobs - a0)) +
-    ((1 - a0 - a1) / (1 - a1)) * y * (y > q_over_10) * (z == 0) * Tobs
+  if(a0 != 0){
+    mI2_under_10 <- (y * (z == 0) * (Tobs - a0)) -
+      ((1 - a0 - a1) / (1 - a1)) * y * (y <= q_under_10) * (z == 0) * Tobs
+    mI2_over_10 <- (-y * (z == 0) * (Tobs - a0)) +
+      ((1 - a0 - a1) / (1 - a1)) * y * (y > q_over_10) * (z == 0) * Tobs
+  } else {
+    mI2_under_10 <- mI2_over_10 <- rep(0, n)
+  }
 
-  mI2_under_01 <- (y * (z == 1) * (Tobs - a0)) -
-    ((1 - a0 - a1) / a1) * y * (y <= q_under_01) * (z == 1) * (1 - Tobs)
-  mI2_over_01 <- (-y * (z == 1) * (Tobs - a0)) +
-    ((1 - a0 - a1) / a1) * y * (y > q_over_01) * (z == 1) * (1 - Tobs)
+  if(a1 != 0){
+    mI2_under_01 <- (y * (z == 1) * (Tobs - a0)) -
+      ((1 - a0 - a1) / a1) * y * (y <= q_under_01) * (z == 1) * (1 - Tobs)
+    mI2_over_01 <- (-y * (z == 1) * (Tobs - a0)) +
+      ((1 - a0 - a1) / a1) * y * (y > q_over_01) * (z == 1) * (1 - Tobs)
+  } else {
+    mI2_under_01 <- mI2_over_01 <- rep(0, n)
+  }
 
-  mI2_under_11 <- (y * (z == 1) * (Tobs - a0)) -
-    ((1 - a0 - a1) / (1 - a1)) * y * (y <= q_under_11) * (z == 1) * Tobs
-  mI2_over_11 <- (-y * (z == 1) * (Tobs - a0)) +
-    ((1 - a0 - a1) / (1 - a1)) * y * (y > q_over_11) * (z == 1) * Tobs
+  if(a0 != 0){
+    mI2_under_11 <- (y * (z == 1) * (Tobs - a0)) -
+      ((1 - a0 - a1) / (1 - a1)) * y * (y <= q_under_11) * (z == 1) * Tobs
+    mI2_over_11 <- (-y * (z == 1) * (Tobs - a0)) +
+      ((1 - a0 - a1) / (1 - a1)) * y * (y > q_over_11) * (z == 1) * Tobs
+  } else {
+    mI2_under_11 <- mI2_over_11 <- rep(0, n)
+  }
 
   mI2 <- cbind(mI2_under_00, mI2_over_00,
                mI2_under_10, mI2_over_10,
@@ -170,9 +199,18 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
   # Calculate p-value of asymptotic test, only keeping inequalities that are
   # *far* from binding
   s_n <- sqrt(diag(Sigma_n))
-  keep_ineq <- (sqrt(n) * m_bar[1:n_ineq] / s_n[1:n_ineq]) <= sqrt(log(n))
+  # Write the t-test as a *strict* inequality with s_n on the RHS
+  # to correctly handle an inequality that does not bind but has zero variance:
+  # it should be treated as *deterministic* and dropped
+  keep_ineq <- (sqrt(n) * m_bar[1:n_ineq]) < (kappa_n * s_n[1:n_ineq])
   n_keep_ineq <- sum(keep_ineq)
   keep <- c(keep_ineq, rep(TRUE, n_eq))
+  # If an inequality has zero variance and is satisfied, it was dropped in the
+  # preceding step. If any of the inequalities that remain have zero variance
+  # then they must bind. In this case, the p-value is zero: we have violated a
+  # deterministic bound. Same holds for a moment equality
+  if(isTRUE(all.equal(min(s_n[keep]), 0))) return(0)
+
   Omega_n_GMS <- cov2cor(Sigma_n[keep, keep])
   M_star_GMS <- sqrtm(Omega_n_GMS) %*% normal_sims[keep,]
   if(sum(n_keep_ineq) > 0){

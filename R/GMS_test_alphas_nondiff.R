@@ -181,6 +181,7 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
                      -q, 0, 0, 1), byrow = TRUE, nrow = 4, ncol = 4) / (p * q - p1_q)
   BE <- -ME %*% HE_inv
   BI <- (1 - a0 - a1) * diag(quantiles / rep(c(rep(a1, 2), rep(1 - a1, 2)), 2))
+  BI[is.infinite(BI)] <- 0
   B <- rbind(matrix(0, 4, 12),
              cbind(BI, matrix(0, 8, 4)),
              cbind(matrix(0, 2, 8), BE))
@@ -189,16 +190,22 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
   V <- var(cbind(m, h))
   A <- cbind(diag(nrow(B)), B)
   Sigma_n <- A %*% V %*% t(A)
+  s_n <- sqrt(diag(Sigma_n))
 
   # Calculate test statistic
-  m_bar <- colMeans(m)
   n_ineq <- ncol(mI)
   n_eq <- ncol(mE)
-  T_n <- get_test_stat(sqrt(n) * m_bar, Sigma_n, n_ineq)
+  m_bar <- colMeans(m)
+  m_bar_ineq <- m_bar[1:n_ineq]
+  m_bar_eq <- m_bar[(n_ineq + 1):(n_ineq + n_eq)]
+  s_n_ineq <- s_n[1:n_ineq]
+  s_n_eq <- s_n[(n_ineq + 1):(n_ineq + n_eq)]
+  T_n_eq <- sum((sqrt(n) * m_bar_eq / s_n_eq)^2)
+  T_n_ineq <- sum(ifelse(m_bar_ineq < 0, (sqrt(n) * m_bar_ineq / s_n_ineq)^2, 0))
+  T_n <- T_n_ineq + T_n_eq
 
   # Calculate p-value of asymptotic test, only keeping inequalities that are
   # *far* from binding
-  s_n <- sqrt(diag(Sigma_n))
   # Write the t-test as a *strict* inequality with s_n on the RHS
   # to correctly handle an inequality that does not bind but has zero variance:
   # it should be treated as *deterministic* and dropped

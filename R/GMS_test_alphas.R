@@ -72,16 +72,26 @@ GMS_test_alphas <- function(a0, a1, dat, normal_sims){
   B <- -1 * M %*% H_inv
   A <- cbind(diag(nrow(B)), B)
   Sigma_n <- A %*% V %*% t(A)
+  s_n <- sqrt(diag(Sigma_n))
 
   # Calculate test statistic
-  m_bar <- colMeans(m)
+  # m_bar <- colMeans(m)
+  # n_ineq <- ncol(mI)
+  # n_eq <- ncol(mE)
+  # T_n <- get_test_stat(sqrt(n) * m_bar, Sigma_n, n_ineq)
   n_ineq <- ncol(mI)
   n_eq <- ncol(mE)
-  T_n <- get_test_stat(sqrt(n) * m_bar, Sigma_n, n_ineq)
+  m_bar <- colMeans(m)
+  m_bar_ineq <- m_bar[1:n_ineq]
+  m_bar_eq <- m_bar[(n_ineq + 1):(n_ineq + n_eq)]
+  s_n_ineq <- s_n[1:n_ineq]
+  s_n_eq <- s_n[(n_ineq + 1):(n_ineq + n_eq)]
+  T_n_eq <- sum((sqrt(n) * m_bar_eq / s_n_eq)^2)
+  T_n_ineq <- sum(ifelse(m_bar_ineq < 0, (sqrt(n) * m_bar_ineq / s_n_ineq)^2, 0))
+  T_n <- T_n_ineq + T_n_eq
 
   # Calculate p-value of asymptotic test, only keeping inequalities that are
   # *far* from binding
-  s_n <- sqrt(diag(Sigma_n))
   keep_ineq <- (sqrt(n) * m_bar[1:n_ineq] / s_n[1:n_ineq]) <= sqrt(log(n))
   n_keep_ineq <- sum(keep_ineq)
   keep <- c(keep_ineq, rep(TRUE, n_eq))

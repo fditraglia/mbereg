@@ -2,42 +2,42 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 testy <- function(y, Tobs, z, normal_draws) {
-    .Call('mbereg_testy', PACKAGE = 'mbereg', y, Tobs, z, normal_draws)
+    .Call('_mbereg_testy', PACKAGE = 'mbereg', y, Tobs, z, normal_draws)
 }
 
 test_Qn <- function(a1, y, Tobs, z) {
-    .Call('mbereg_test_Qn', PACKAGE = 'mbereg', a1, y, Tobs, z)
+    .Call('_mbereg_test_Qn', PACKAGE = 'mbereg', a1, y, Tobs, z)
 }
 
 test_Qn_opt <- function(y, Tobs, z) {
-    .Call('mbereg_test_Qn_opt', PACKAGE = 'mbereg', y, Tobs, z)
+    .Call('_mbereg_test_Qn_opt', PACKAGE = 'mbereg', y, Tobs, z)
 }
 
 BCS_test_cpp <- function(beta_null, y, Tobs, z, normal_draws) {
-    .Call('mbereg_BCS_test_cpp', PACKAGE = 'mbereg', beta_null, y, Tobs, z, normal_draws)
+    .Call('_mbereg_BCS_test_cpp', PACKAGE = 'mbereg', beta_null, y, Tobs, z, normal_draws)
 }
 
 center <- function(M) {
-    .Call('mbereg_center', PACKAGE = 'mbereg', M)
+    .Call('_mbereg_center', PACKAGE = 'mbereg', M)
 }
 
 mycov <- function(M1, M2) {
-    .Call('mbereg_mycov', PACKAGE = 'mbereg', M1, M2)
+    .Call('_mbereg_mycov', PACKAGE = 'mbereg', M1, M2)
 }
 
 SS <- function(v) {
-    .Call('mbereg_SS', PACKAGE = 'mbereg', v)
+    .Call('_mbereg_SS', PACKAGE = 'mbereg', v)
 }
 
 SS_neg <- function(v) {
-    .Call('mbereg_SS_neg', PACKAGE = 'mbereg', v)
+    .Call('_mbereg_SS_neg', PACKAGE = 'mbereg', v)
 }
 
 sqrtm_cpp <- function(M) {
-    .Call('mbereg_sqrtm_cpp', PACKAGE = 'mbereg', M)
+    .Call('_mbereg_sqrtm_cpp', PACKAGE = 'mbereg', M)
 }
 
 cov2cor_cpp <- function(V) {
-    .Call('mbereg_cov2cor_cpp', PACKAGE = 'mbereg', V)
+    .Call('_mbereg_cov2cor_cpp', PACKAGE = 'mbereg', V)
 }
 

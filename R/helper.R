@@ -26,3 +26,19 @@ sqrtm <- function(M, tol = 1e-06){
   return(M_sqrt)
 }
 
+
+get_coverage <- function(x, CIs){
+  lower <- apply(CIs, 1, min)
+  lower[is.na(lower)] <- Inf
+  upper <- apply(CIs, 1, max)
+  upper[is.na(upper)] <- -Inf
+  sapply(x, function(x)  mean((lower < x) & (upper > x)))
+}
+
+get_median_width <- function(CIs) {
+  lower <- apply(CIs, 1, min)
+  lower[is.na(lower)] <- 0
+  upper <- apply(CIs, 1, max)
+  upper[is.na(upper)] <- 0
+  median(upper - lower)
+}

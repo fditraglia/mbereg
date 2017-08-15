@@ -1,11 +1,3 @@
-get_coverage <- function(x, CIs){
-  lower <- apply(CIs, 1, min)
-  lower[is.na(lower)] <- Inf
-  upper <- apply(CIs, 1, max)
-  upper[is.na(upper)] <- -Inf
-  sapply(x, function(x)  mean((lower < x) & (upper > x)))
-}
-
 CI_plot <- function(results, i, param = 'b', mult = 1, nx = 500, nominal = 0.9){
   stopifnot(param %in% c('b', 'theta1', 's'))
 

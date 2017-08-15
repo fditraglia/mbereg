@@ -24,7 +24,7 @@ build_table <- function(results, TeX = TRUE) {
   tab <- subset(results, b == b_vals[1])[,c('a0', 'a1', 'stat')]
   names(tab)[names(tab) == 'stat'] <- paste0('b=', b_vals[1])
   for(i in 2:length(b_vals)){
-    temp <- subset(results, b == b_vals[1])[,c('a0', 'a1', 'stat')]
+    temp <- subset(results, b == b_vals[i])[,c('a0', 'a1', 'stat')]
     names(temp)[names(temp) == 'stat'] <- paste0('b=', b_vals[i])
     tab <- merge(tab, temp)
   }

@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // testy
 List testy(arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws);
-RcppExport SEXP _mbereg_testy(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP, SEXP normal_drawsSEXP) {
+RcppExport SEXP mbereg_testy(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP, SEXP normal_drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,7 +22,7 @@ END_RCPP
 }
 // test_Qn
 double test_Qn(double a1, arma::vec y, arma::vec Tobs, arma::vec z);
-RcppExport SEXP _mbereg_test_Qn(SEXP a1SEXP, SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
+RcppExport SEXP mbereg_test_Qn(SEXP a1SEXP, SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,7 +36,7 @@ END_RCPP
 }
 // test_Qn_opt
 List test_Qn_opt(arma::vec y, arma::vec Tobs, arma::vec z);
-RcppExport SEXP _mbereg_test_Qn_opt(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
+RcppExport SEXP mbereg_test_Qn_opt(SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // BCS_test_cpp
 List BCS_test_cpp(double beta_null, arma::vec y, arma::vec Tobs, arma::vec z, arma::mat normal_draws);
-RcppExport SEXP _mbereg_BCS_test_cpp(SEXP beta_nullSEXP, SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP, SEXP normal_drawsSEXP) {
+RcppExport SEXP mbereg_BCS_test_cpp(SEXP beta_nullSEXP, SEXP ySEXP, SEXP TobsSEXP, SEXP zSEXP, SEXP normal_drawsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -64,7 +64,7 @@ END_RCPP
 }
 // center
 arma::mat center(arma::mat M);
-RcppExport SEXP _mbereg_center(SEXP MSEXP) {
+RcppExport SEXP mbereg_center(SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -75,7 +75,7 @@ END_RCPP
 }
 // mycov
 arma::mat mycov(arma::mat M1, arma::mat M2);
-RcppExport SEXP _mbereg_mycov(SEXP M1SEXP, SEXP M2SEXP) {
+RcppExport SEXP mbereg_mycov(SEXP M1SEXP, SEXP M2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -87,7 +87,7 @@ END_RCPP
 }
 // SS
 double SS(arma::vec v);
-RcppExport SEXP _mbereg_SS(SEXP vSEXP) {
+RcppExport SEXP mbereg_SS(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,7 +98,7 @@ END_RCPP
 }
 // SS_neg
 double SS_neg(arma::vec v);
-RcppExport SEXP _mbereg_SS_neg(SEXP vSEXP) {
+RcppExport SEXP mbereg_SS_neg(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -109,7 +109,7 @@ END_RCPP
 }
 // sqrtm_cpp
 arma::mat sqrtm_cpp(arma::mat M);
-RcppExport SEXP _mbereg_sqrtm_cpp(SEXP MSEXP) {
+RcppExport SEXP mbereg_sqrtm_cpp(SEXP MSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -120,7 +120,7 @@ END_RCPP
 }
 // cov2cor_cpp
 arma::mat cov2cor_cpp(arma::mat V);
-RcppExport SEXP _mbereg_cov2cor_cpp(SEXP VSEXP) {
+RcppExport SEXP mbereg_cov2cor_cpp(SEXP VSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -131,16 +131,16 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mbereg_testy", (DL_FUNC) &_mbereg_testy, 4},
-    {"_mbereg_test_Qn", (DL_FUNC) &_mbereg_test_Qn, 4},
-    {"_mbereg_test_Qn_opt", (DL_FUNC) &_mbereg_test_Qn_opt, 3},
-    {"_mbereg_BCS_test_cpp", (DL_FUNC) &_mbereg_BCS_test_cpp, 5},
-    {"_mbereg_center", (DL_FUNC) &_mbereg_center, 1},
-    {"_mbereg_mycov", (DL_FUNC) &_mbereg_mycov, 2},
-    {"_mbereg_SS", (DL_FUNC) &_mbereg_SS, 1},
-    {"_mbereg_SS_neg", (DL_FUNC) &_mbereg_SS_neg, 1},
-    {"_mbereg_sqrtm_cpp", (DL_FUNC) &_mbereg_sqrtm_cpp, 1},
-    {"_mbereg_cov2cor_cpp", (DL_FUNC) &_mbereg_cov2cor_cpp, 1},
+    {"mbereg_testy", (DL_FUNC) &mbereg_testy, 4},
+    {"mbereg_test_Qn", (DL_FUNC) &mbereg_test_Qn, 4},
+    {"mbereg_test_Qn_opt", (DL_FUNC) &mbereg_test_Qn_opt, 3},
+    {"mbereg_BCS_test_cpp", (DL_FUNC) &mbereg_BCS_test_cpp, 5},
+    {"mbereg_center", (DL_FUNC) &mbereg_center, 1},
+    {"mbereg_mycov", (DL_FUNC) &mbereg_mycov, 2},
+    {"mbereg_SS", (DL_FUNC) &mbereg_SS, 1},
+    {"mbereg_SS_neg", (DL_FUNC) &mbereg_SS_neg, 1},
+    {"mbereg_sqrtm_cpp", (DL_FUNC) &mbereg_sqrtm_cpp, 1},
+    {"mbereg_cov2cor_cpp", (DL_FUNC) &mbereg_cov2cor_cpp, 1},
     {NULL, NULL, 0}
 };
 

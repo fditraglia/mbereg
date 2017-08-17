@@ -27,18 +27,28 @@ sqrtm <- function(M, tol = 1e-06){
 }
 
 
-get_coverage <- function(x, CIs){
+get_coverage <- function(x, CIs, NAempty = TRUE){
   lower <- apply(CIs, 1, min)
-  lower[is.na(lower)] <- Inf
   upper <- apply(CIs, 1, max)
-  upper[is.na(upper)] <- -Inf
+  if(NAempty) {
+    lower[is.na(lower)] <- Inf
+    upper[is.na(upper)] <- -Inf
+  } else {
+    lower[is.na(lower)] <- -Inf
+    upper[is.na(upper)] <- Inf
+  }
   sapply(x, function(x)  mean((lower < x) & (upper > x)))
 }
 
-get_median_width <- function(CIs) {
+get_median_width <- function(CIs, NAempty = TRUE) {
   lower <- apply(CIs, 1, min)
-  lower[is.na(lower)] <- 0
   upper <- apply(CIs, 1, max)
-  upper[is.na(upper)] <- 0
+  if(NAempty) {
+    lower[is.na(lower)] <- 0
+    upper[is.na(upper)] <- 0
+  } else {
+    lower[is.na(lower)] <- -Inf
+    upper[is.na(upper)] <- Inf
+  }
   median(upper - lower)
 }

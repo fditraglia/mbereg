@@ -18,6 +18,9 @@ GMM_endog <- function(dat){
 
   b_squared <- 3 * (theta2 / theta1)^2 - 2 * (theta3 / theta1)
 
+  est <- list(a0 = NA, a1 = NA, b = NA)
+  SE <- list(a0 = NA, a1 = NA, b = NA)
+
   if(b_squared > 0){
     # Calculate GMM point estimates for beta, a0, a1
     b <- sign(theta1) * sqrt(b_squared)
@@ -26,6 +29,9 @@ GMM_endog <- function(dat){
     r <- Re(polyroot(c(A^2 - B, 2 * A, -2)))
     a0 <- min(r)
     a1 <- 1 - max(r)
+    est$a0 <- a0
+    est$a1 <- a1
+    est$b <- b
 
     # Calculate GMM asymptotic standard errors
     w <- cbind(Tobs, y, y * Tobs, y^2, y^2 * Tobs, y^3)
@@ -70,15 +76,17 @@ GMM_endog <- function(dat){
                t(w_bar) %*% D_psi3)
     q <- mean(z)
 
-    F_inv <- solve(rbind(cbind(G, -q * diag(nrow(G))),
-                         cbind(H, -diag(nrow(H)))))
-    Omega <- var(f)
-    Avar <- F_inv %*% Omega %*% t(F_inv)
-
-    est <- list(a0 = a0, a1 = a1, b = b)
-    SE_full <- sqrt(diag(Avar) / n)
-    SE <-  list(a0 = SE_full[1], a1 = SE_full[2], b = SE_full[3])
-    return(list(est = est, SE = SE))
+    Eff <- rbind(cbind(G, -q * diag(nrow(G))),
+                 cbind(H, -diag(nrow(H))))
+    if(kappa(Eff) * .Machine$double.eps < 1) {
+      F_inv <- solve(Eff, tol = 1e-17)
+      Omega <- var(f)
+      Avar <- F_inv %*% Omega %*% t(F_inv)
+      SE_full <- sqrt(diag(Avar) / n)
+      SE$a0 <- SE_full[1]
+      SE$a1 <- SE_full[2]
+      SE$b <- SE_full[3]
+    }
   }
-  return(NA)
+  return(list(est = est, SE = SE))
 }

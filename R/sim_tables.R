@@ -19,6 +19,27 @@ get_bonf_width_raw <- function(results){
                       stat = sapply(1:nrow(results$params), h)))
 }
 
+get_GMM_cover_raw <- function(results){
+  g <- function(i) {
+    params <- results$params[i,]
+    b_true <- params$b
+    CIs <- do.call(rbind, lapply(results$CIs_GMM[[i]], function(x) x$b))
+    100 * round(get_coverage(b_true, CIs, NAempty = FALSE), 2)
+  }
+  as.data.frame(cbind(results$params,
+                      stat = sapply(1:nrow(results$params), g)))
+}
+get_GMM_width_raw <- function(results){
+  h <- function(i) {
+    params <- results$params[i,]
+    b_true <- params$b
+    CIs <- do.call(rbind, lapply(results$CIs_GMM[[i]], function(x) x$b))
+    round(get_median_width(CIs, NAempty = FALSE), 2)
+  }
+  as.data.frame(cbind(results$params,
+                      stat = sapply(1:nrow(results$params), h)))
+}
+
 build_table <- function(results, TeX = TRUE) {
   b_vals <- unique(results$b)
   tab <- subset(results, b == b_vals[1])[,c('a0', 'a1', 'stat')]

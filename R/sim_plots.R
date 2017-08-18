@@ -55,12 +55,9 @@ CI_plot <- function(results, i, param = 'b', mult = 1, nx = 500, nominal = 0.9){
   }
 }
 
-CI_compare_plot <- function(results_weak, results_nondiff, i, xlims = NULL,
-                            nx = 500, nominal = 0.9, alphaonly = FALSE){
 
-  stopifnot(identical(results_weak$params[i,], results_nondiff$params[i,]))
-
-  true_params <- results_weak$params[i,]
+CI_compare_plot <- function(CIs_main, CIs_compare, true_params, xlims = NULL,
+                            nx = 500, nominal = 95, alphaonly = FALSE){
   b_true <- true_params$b
   a0_true <- true_params$a0
   a1_true <- true_params$a1
@@ -70,27 +67,19 @@ CI_compare_plot <- function(results_weak, results_nondiff, i, xlims = NULL,
   d_true <- true_params$d
   RF_true <- b_true * (1 - 2 * d_true)
 
-  CIs_weak <- results_weak$CIs_bonf[[i]]
-  CIs_weak <- lapply(CIs_weak, function(x) x$b)
-  CIs_weak <- do.call(rbind, CIs_weak)
-
-  CIs_nondiff <- results_nondiff$CIs_bonf[[i]]
-  CIs_nondiff <- lapply(CIs_nondiff, function(x) x$b)
-  CIs_nondiff <- do.call(rbind, CIs_nondiff)
-
   if(is.null(xlims)){
-    xmin <- min(quantile(CIs_nondiff[,1], 0.01, na.rm = TRUE),
-                quantile(CIs_weak[,1], 0.01, na.rm = TRUE))
-    xmax <- max(quantile(CIs_nondiff[,2], 0.99, na.rm = TRUE),
-                quantile(CIs_weak[,2], 0.99, na.rm = TRUE))
+    xmin <- min(quantile(CIs_main[,1], 0.01, na.rm = TRUE),
+                quantile(CIs_compare[,1], 0.01, na.rm = TRUE))
+    xmax <- max(quantile(CIs_main[,2], 0.99, na.rm = TRUE),
+                quantile(CIs_compare[,2], 0.99, na.rm = TRUE))
   } else {
     xmin <- min(xlims)
     xmax <- max(xlims)
   }
 
   x <- seq(xmin, xmax, length.out = nx)
-  coverage_weak <- get_coverage(x, CIs_weak)
-  coverage_nondiff <- get_coverage(x, CIs_nondiff)
+  coverage_main <- get_coverage(x, CIs_main)
+  coverage_compare <- get_coverage(x, CIs_compare)
 
   myxlab <- '$\\beta$'
   if(alphaonly) {
@@ -102,9 +91,12 @@ CI_compare_plot <- function(results_weak, results_nondiff, i, xlims = NULL,
                      ', \\alpha_1 = ', a1_true,
                      ', n = ', n_true, '$')
   }
-  plot(x, coverage_weak, type = 'l', xlab = '', ylab = '',
-       main = mymain, lwd = 2, col = 'red', lty = 2)
-  points(x, coverage_nondiff, type = 'l', lwd = 2, col = 'blue', lty = 1)
+  matplot(x, cbind(coverage_main, coverage_compare),
+          lwd = 2, lty = c(1, 2), col = c('blue', 'red'),
+          xlab = '', ylab = '', type = 'l', main = mymain)
+  #plot(x, coverage_main, type = 'l', xlab = '', ylab = '',
+  #     main = mymain, lwd = 1, col = 'blue', lty = 2)
+  #points(x, coverage_compare, type = 'l', lwd = 2, col = 'red', lty = 2)
   abline(h = nominal, lty = 3)
   abline(v = RF_true, lty = 3)
   abline(v = theta1_true, lty = 3)

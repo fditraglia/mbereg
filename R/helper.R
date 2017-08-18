@@ -37,7 +37,7 @@ get_coverage <- function(x, CIs, NAempty = TRUE){
     lower[is.na(lower)] <- -Inf
     upper[is.na(upper)] <- Inf
   }
-  sapply(x, function(x)  mean((lower < x) & (upper > x)))
+  sapply(x, function(x)  100 * round(mean((lower < x) & (upper > x)), 2))
 }
 
 get_median_width <- function(CIs, NAempty = TRUE) {
@@ -50,5 +50,15 @@ get_median_width <- function(CIs, NAempty = TRUE) {
     lower[is.na(lower)] <- -Inf
     upper[is.na(upper)] <- Inf
   }
-  median(upper - lower)
+  round(median(upper - lower), 2)
+}
+
+get_twostep_CI <- function(CIs_GMM, CIs_bonf) {
+ CIs_GMM[is.na(CIs_GMM[,1]),1] <- -Inf
+ CIs_GMM[is.na(CIs_GMM[,2]),2] <- +Inf
+ use_GMM <- (CIs_GMM[,1] > CIs_bonf[,1]) & (CIs_GMM[,2] < CIs_bonf[,2])
+ lower <- ifelse(use_GMM, CIs_GMM[,1], CIs_bonf[,1])
+ upper <- ifelse(use_GMM, CIs_GMM[,2], CIs_bonf[,2])
+ out <- cbind(lower, upper)
+ return(out)
 }

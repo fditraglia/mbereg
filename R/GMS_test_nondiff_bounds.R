@@ -182,6 +182,7 @@ GMS_test_alphas_nondiff <- function(a0, a1, dat, normal_sims){
   BE <- -ME %*% HE_inv
   BI <- (1 - a0 - a1) * diag(quantiles / rep(c(rep(a1, 2), rep(1 - a1, 2)), 2))
   BI[is.infinite(BI)] <- 0
+  BI[is.nan(BI)] <- 0
   B <- rbind(matrix(0, 4, 12),
              cbind(BI, matrix(0, 8, 4)),
              cbind(matrix(0, 2, 8), BE))
@@ -385,6 +386,7 @@ GMS_test_alphas_nondiff_FL <- function(a0, a1, dat, normal_sims){
 
   BI <- (1 - a0 - a1) * diag(quantiles / rep(c(rep(a1, 2), rep(1 - a1, 2)), 2))
   BI[is.infinite(BI)] <- 0
+  BI[is.nan(BI)] <- 0
   B <- rbind(matrix(0, 4, 10),
              cbind(BI, matrix(0, 8, 2)),
              cbind(matrix(0, 2, 8), BE))

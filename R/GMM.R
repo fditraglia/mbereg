@@ -90,3 +90,74 @@ GMM_endog <- function(dat){
   }
   return(list(est = est, SE = SE))
 }
+
+# Unconstrained GMM estimator of model under the joint exogeneity assumption of
+# Frazis & Loewenstein (2003), Mahajan (2006), etc.
+GMM_exog <- function(dat){
+  y <- dat$y
+  Tobs <- dat$Tobs
+  z <- dat$z
+  n <- nrow(dat)
+
+  PI <- cov(z, Tobs)
+  theta1 <- cov(y, z) / PI
+  kappa1 <- mean(y) - theta1 * mean(Tobs)
+  eta <- cov((y - kappa1) * Tobs, z) / PI
+  rho <- mean(y * Tobs) - (kappa1 + eta) * mean(Tobs)
+
+  b_squared <- eta^2 + 4 * theta1 * rho
+
+  est <- list(a0 = NA, a1 = NA, b = NA)
+  SE <- list(a0 = NA, a1 = NA, b = NA)
+
+  if(b_squared > 0){
+    # Calculate GMM point estimates for beta, a0, a1
+    b <- sign(theta1) * sqrt(b_squared)
+    A <- eta / theta1
+    B <- -rho / theta1
+    r <- Re(polyroot(c(B, -A, 1)))
+    a0 <- min(r)
+    a1 <- 1 - max(r)
+    est$a0 <- a0
+    est$a1 <- a1
+    est$b <- b
+
+    # Calculate GMM asymptotic standard errors
+    g <- cbind(y - kappa1 - theta1 * Tobs, (y - kappa1 - theta1 * Tobs) * z)
+    h <- cbind((y - kappa1) * Tobs - rho -  eta * Tobs,
+               ((y - kappa1) * Tobs - rho -  eta * Tobs) * z)
+    f <- cbind(g, h)
+
+    D_theta1 <- c(theta1, theta1, 1) / (1 - a0 - a1)
+    D_rho <- -a0 * (1 - a1) * D_theta1 + c(-theta1 * (1 - a1), theta1 * a0, 0)
+    D_eta <- (1 + a0 - a1) * D_theta1 + c(theta1, -theta1, 0)
+
+
+    D_theta1 <- c(theta1, theta1, 1) / (1 - a0 - a1)
+    D_theta2 <- 2 * theta1 * (1 + a0 - a1) * D_theta1 + theta1^2 * c(1 , -1, 0)
+    D_theta3 <- 3 * theta1^2 * ((1 - a0 - a1)^2 + 6 * a0 * (1 - a1)) * D_theta1 +
+      theta1^3 * c(-2 * (1 - a0 - a1) + 6 * (1 - a1),
+                   -2 * (1 - a0 - a1) - 6 * a0, 0)
+
+    q <- mean(z)
+    p <- mean(Tobs)
+    p1 <- mean(Tobs[z == 1])
+    G <- rbind(cbind(-t(D_theta1) * p, -1),
+               cbind(-t(D_theta1) * p1 * q, -q))
+    H <- rbind(cbind(-t(D_rho + p * D_eta), -p),
+               cbind(-t(q * D_rho + p1 * q * D_eta), -p1 * q))
+    Eff <- rbind(G, H)
+
+
+    if(kappa(Eff) * .Machine$double.eps < 1) {
+      F_inv <- solve(Eff, tol = 1e-17)
+      Omega <- var(f)
+      Avar <- F_inv %*% Omega %*% t(F_inv)
+      SE_full <- sqrt(diag(Avar) / n)
+      SE$a0 <- SE_full[1]
+      SE$a1 <- SE_full[2]
+      SE$b <- SE_full[3]
+    }
+  }
+  return(list(est = est, SE = SE))
+}

@@ -63,6 +63,29 @@ sim_GMM_endog <- function(true_params, delta, ncores, nreps = 1000) {
 }
 
 
+sim_GMM_exog <- function(true_params, delta, ncores, nreps = 1000) {
+  sim_rep <- function(){
+    sim_dat <- dgp(a0 = true_params$a0,
+                   a1 = true_params$a1,
+                   b = true_params$b,
+                   n = true_params$n,
+                   d = true_params$d,
+                   rho = true_params$rho,
+                   cc = true_params$cc)
+    gmm <- GMM_exog(sim_dat)
+    if((!is.na(gmm$est$b)) & (!is.na(gmm$SE$b))){
+      b <- gmm$est$b
+      SE <- gmm$SE$b
+      ME <- SE * qnorm(1 - delta / 2)
+      LCL <- b - ME
+      UCL <- b + ME
+      return(list(b = c(lower = LCL, upper = UCL)))
+    } else {
+      return(list(b = c(lower = NA, upper = NA)))
+    }
+  }
+  return(parallel::mclapply(1:nreps, function(i) sim_rep(), mc.cores = ncores))
+}
 
 
 sim_bonf_vs_gmm <- function(true_params, normal_sims, delta1, delta2, ncores,

@@ -1,45 +1,3 @@
-get_bonf_cover_raw <- function(results){
-  g <- function(i) {
-    params <- results$params[i,]
-    b_true <- params$b
-    CIs <- do.call(rbind, lapply(results$CIs_bonf[[i]], function(x) x$b))
-    100 * round(get_coverage(b_true, CIs), 2)
-  }
-  as.data.frame(cbind(results$params,
-                      stat = sapply(1:nrow(results$params), g)))
-}
-get_bonf_width_raw <- function(results){
-  h <- function(i) {
-    params <- results$params[i,]
-    b_true <- params$b
-    CIs <- do.call(rbind, lapply(results$CIs_bonf[[i]], function(x) x$b))
-    round(get_median_width(CIs), 2)
-  }
-  as.data.frame(cbind(results$params,
-                      stat = sapply(1:nrow(results$params), h)))
-}
-
-get_GMM_cover_raw <- function(results){
-  g <- function(i) {
-    params <- results$params[i,]
-    b_true <- params$b
-    CIs <- do.call(rbind, lapply(results$CIs_GMM[[i]], function(x) x$b))
-    100 * round(get_coverage(b_true, CIs, NAempty = FALSE), 2)
-  }
-  as.data.frame(cbind(results$params,
-                      stat = sapply(1:nrow(results$params), g)))
-}
-get_GMM_width_raw <- function(results){
-  h <- function(i) {
-    params <- results$params[i,]
-    b_true <- params$b
-    CIs <- do.call(rbind, lapply(results$CIs_GMM[[i]], function(x) x$b))
-    round(get_median_width(CIs, NAempty = FALSE), 2)
-  }
-  as.data.frame(cbind(results$params,
-                      stat = sapply(1:nrow(results$params), h)))
-}
-
 summarize_CI_results <- function(results) {
   h <- function(i) {
     params <- results$params[i,]
@@ -57,12 +15,15 @@ summarize_CI_results <- function(results) {
     cover_twostep <- get_coverage(b_true, CIs_twostep)
     width_twostep <- get_median_width(CIs_twostep)
 
+    GMM_na <- get_prop_CIs_na(CIs_GMM)
+
     out <- data.frame(cover_GMM = cover_GMM,
                       cover_bonf = cover_bonf,
                       cover_twostep = cover_twostep,
                       width_GMM = width_GMM,
                       width_bonf = width_bonf,
-                      width_twostep = width_twostep)
+                      width_twostep = width_twostep,
+                      GMM_na = GMM_na)
     return(out)
   }
   cbind(results$params, t(sapply(1:nrow(results$params), h)))

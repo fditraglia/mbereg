@@ -62,3 +62,9 @@ get_twostep_CI <- function(CIs_GMM, CIs_bonf) {
  out <- cbind(lower, upper)
  return(out)
 }
+
+get_prop_CIs_na <- function(CIs) {
+  out <- mean(apply(CIs, 1, function(x) any(is.na(x))))
+  return(100 * round(out, 2))
+}
+

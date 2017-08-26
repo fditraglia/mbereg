@@ -4,8 +4,15 @@ summarize_CI_results <- function(results) {
     b_true <- params$b
 
     CIs_GMM <- do.call(rbind, lapply(results$CIs[[i]], function(x) x$gmm))
-    cover_GMM <- get_coverage(b_true, CIs_GMM, NAempty = FALSE)
-    width_GMM <- get_median_width(CIs_GMM, NAempty = FALSE)
+    keep_GMM <- apply(CIs_GMM, 1, function(x) all(!is.na(x)))
+    CIs_GMM_notNA <- CIs_GMM[keep_GMM,,drop = FALSE]
+    if(sum(keep_GMM) > 0){
+      cover_GMM <- get_coverage(b_true, CIs_GMM)
+      width_GMM <- get_median_width(CIs_GMM)
+    } else {
+      cover_GMM <- NA
+      width_GMM <- NA
+    }
 
     CIs_bonf <- do.call(rbind, lapply(results$CIs[[i]], function(x) x$bonf))
     cover_bonf <- get_coverage(b_true, CIs_bonf)
